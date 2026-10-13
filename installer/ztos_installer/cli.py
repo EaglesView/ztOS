@@ -109,7 +109,7 @@ def cmd_install(args):
     if s.target == "qemu":
         print("\nztOS is installed in the emulator's disk:", image)
         if args.yes or ask("Start it now?"):
-            t.run_qemu(headless=args.headless)
+            t.run_qemu(headless=args.headless, gl=getattr(args, "gl", False))
         else:
             print("Start it later with: ztos emulator")
     else:
@@ -123,7 +123,12 @@ def cmd_build(args):
 
 
 def cmd_emulator(args):
-    t.run_qemu(headless=args.headless)
+    t.run_qemu(headless=args.headless, gl=args.gl)
+
+
+def cmd_screenshots(args):
+    from . import screenshots
+    screenshots.take(Path(args.out), keep=args.keep)
 
 
 def cmd_guide(args):
@@ -165,7 +170,13 @@ def main(argv=None):
     p.set_defaults(func=cmd_build, target="qemu")
     p = sub.add_parser("emulator", help="start ztOS in the emulator")
     p.add_argument("--headless", action="store_true")
+    p.add_argument("--gl", action="store_true", help="draw with the computer's GPU (virgl): faster, but some "
+                   "drivers crash QEMU with EGL_BAD_ACCESS")
     p.set_defaults(func=cmd_emulator)
+    p = sub.add_parser("screenshots", help="boot the emulator and take screenshots of ztOS")
+    p.add_argument("--out", default=str(b.ROOT / "docs" / "screenshots"))
+    p.add_argument("--keep", action="store_true", help="leave the emulator running afterwards")
+    p.set_defaults(func=cmd_screenshots)
     sub.add_parser("guide", help="installing on the phone, step by step").set_defaults(func=cmd_guide)
     sub.add_parser("doctor", help="is this computer ready?").set_defaults(func=cmd_doctor)
 

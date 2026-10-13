@@ -16,10 +16,15 @@ QEMU_SCREEN = (540, 1110)       # a phone's shape; ztMETRO draws it at 1.5 px a 
 EGL_HEADLESS = Path("/usr/lib/qemu/ui-egl-headless.so").exists()
 
 
-def qemu_command(disk: Path, headless: bool = False, monitor: Path | None = None) -> list:
-    """The emulated phone: the "virt" machine, a virtio GPU with OpenGL (virgl)
-    for ztMETRO, a pointer it takes as a finger, a keyboard, and the network
-    (ssh to it on localhost:2222)."""
+def qemu_command(disk: Path, headless: bool = False, monitor: Path | None = None, gl: bool = False) -> list:
+    """The emulated phone: the "virt" machine, a virtio GPU, a pointer it takes
+    as a finger, a keyboard, and the network (ssh to it on localhost:2222).
+
+    By default nothing of the host's graphics is used: ztMETRO draws with
+    software OpenGL in the guest (slower, but it works on any computer). With
+    gl=True the guest gets virgl, drawn by the host's GPU through QEMU's GTK
+    window; some drivers (NVIDIA on laptops with two GPUs, in particular) make
+    QEMU stop with "eglMakeCurrent failed: EGL_BAD_ACCESS"."""
     if not (EDK2 / "QEMU_EFI.fd").exists():
         raise Fail("no UEFI firmware for aarch64: sudo pacman -S edk2-aarch64")
     if shutil.which("qemu-system-aarch64") is None:
@@ -29,33 +34,32 @@ def qemu_command(disk: Path, headless: bool = False, monitor: Path | None = None
            "-bios", str(EDK2 / "QEMU_EFI.fd"),
            "-drive", f"file={disk},if=none,id=disk,format=raw,cache=unsafe",
            "-device", "virtio-blk-pci,drive=disk",
-           "-device", (f"virtio-gpu-gl-pci,xres={w},yres={h}" if not headless or EGL_HEADLESS
-                       else f"virtio-gpu-pci,xres={w},yres={h}"),
+           "-device", f"{'virtio-gpu-gl-pci' if gl and not headless else 'virtio-gpu-pci'},xres={w},yres={h}",
            "-device", "virtio-tablet-pci", "-device", "virtio-keyboard-pci",
            "-netdev", "user,id=net,hostfwd=tcp:127.0.0.1:2222-:22",
            "-device", "virtio-net-pci,netdev=net",
            "-device", "virtio-rng-pci",
            "-audiodev", "none,id=snd"]
     if headless:
-        # OpenGL without a window needs QEMU's egl-headless display (qemu-ui-egl-headless);
-        # without it, the guest draws with software OpenGL on a plain virtio GPU
-        cmd += (["-display", "egl-headless"] if EGL_HEADLESS else ["-display", "none"]) + ["-vnc", "127.0.0.1:5"]
+        cmd += ["-display", "none", "-vnc", "127.0.0.1:5"]
     else:
-        cmd += ["-display", "gtk,gl=on,zoom-to-fit=off"]
+        cmd += ["-display", "gtk,gl=on,zoom-to-fit=off" if gl else "gtk,gl=off,zoom-to-fit=off"]
     if monitor is not None:
         cmd += ["-monitor", f"unix:{monitor},server,nowait"]
     cmd += ["-serial", f"file:{WORK / 'qemu' / 'console.log'}"]
     return cmd
 
 
-def run_qemu(headless: bool = False, wait: bool = True) -> subprocess.Popen:
+def run_qemu(headless: bool = False, wait: bool = True, gl: bool = False) -> subprocess.Popen:
     disk = WORK / "qemu" / "ztos-qemu.img"
     if not disk.exists():
         raise Fail("there is no ztOS disk for QEMU yet: ztos install --target qemu (or ztos build --target qemu)")
     monitor = WORK / "qemu" / "monitor.sock"
     monitor.unlink(missing_ok=True)
-    cmd = qemu_command(disk, headless, monitor)
+    cmd = qemu_command(disk, headless, monitor, gl)
     say("starting the ztOS emulator" + (" (headless: vnc 127.0.0.1:5905)" if headless else ""))
+    say("it boots slowly (the whole phone is emulated): the screen stays black for a few minutes, "
+        "then ztMETRO's Start appears")
     say("the mouse is your finger: click to tap, drag to swipe; Escape is the phone's back")
     say("ssh into it: ssh -p 2222 <user>@localhost   (its console: build/ztos/qemu/console.log)")
     proc = subprocess.Popen(cmd)
