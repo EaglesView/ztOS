@@ -226,7 +226,7 @@ for u in systemd-networkd getty@tty1; do
 done
 if [ "$TARGET" = starlte ]; then
 	for u in zboot-usb-gadget zboot-firstboot zboot-charge-hold zrn-charge ztoscirrusaudio ztoscsf-sensorhub \
-			ztoscsf-sensord ztoscorenetworking-modem ztoscorenetworking zrnperfd; do
+			ztoscsf-sensord ztoscorenetworking-modem ztoscorenetworking zrnperfd ztos-panel-selfmask; do
 		ch systemctl enable "$u" > /dev/null 2>&1 || echo "(no $u)"
 	done
 fi
