@@ -1,0 +1,52 @@
+#!/bin/sh
+# zrn-cpuidle: let idle cores power down (power/idle/zrn-cpuidle.ko), which is
+# what the phone's idle drain is waiting for: without it every core sits in
+# WFI, powered and clocked, all the time.
+#
+#	zrn-cpuidle try		load it now, for six of the eight cores (one of
+#				each cluster stays awake: with a whole cluster
+#				asleep the phone froze, see power/README.md)
+#	zrn-cpuidle keep	load it at every boot from now on
+#	zrn-cpuidle never	stop loading it at boot
+#	zrn-cpuidle status
+#
+# Loading can freeze the phone, and once the watchdog did not bring it back:
+# try it with the charger in and the phone in reach. A mark is left before
+# loading and removed two minutes after; a boot that finds the mark does not
+# load the module again and says so (remove /var/lib/zrn-cpuidle/loading).
+D=/var/lib/zrn-cpuidle
+MARK=$D/loading
+KO=/usr/lib/modules/$(uname -r)/extra/zrn-cpuidle.ko
+CPUS=${ZRN_CPUIDLE_CPUS:-0x7e}
+mkdir -p $D
+
+load() {
+	[ -d /sys/module/zrn_cpuidle ] && { echo "zrn-cpuidle: already loaded"; return 0; }
+	[ -e "$KO" ] || { echo "zrn-cpuidle: $KO is not installed"; return 1; }
+	if [ -e $MARK ]; then
+		echo "zrn-cpuidle: the last load did not finish (the phone froze or restarted); not loading. Remove $MARK to try again."
+		return 1
+	fi
+	A=$(awk '$3=="psci_cpu_suspend_enter"{print $1}' /proc/kallsyms)
+	[ -n "$A" ] && [ "$A" != 0000000000000000 ] || { echo "zrn-cpuidle: psci_cpu_suspend_enter not found (kptr_restrict?)"; return 1; }
+	touch $MARK; sync
+	insmod "$KO" suspend_enter=0x$A cpus=$CPUS || { rm -f $MARK; echo "zrn-cpuidle: the module did not load"; return 1; }
+	echo "zrn-cpuidle: loaded for cores $CPUS"
+	# a freeze shows within seconds of the cores first sleeping; two minutes is ample
+	( sleep 120; rm -f $MARK; sync ) > /dev/null 2>&1 &
+}
+
+case "$1" in
+try|start) load ;;
+keep) systemctl enable zrn-cpuidle.service && echo "zrn-cpuidle: loaded at every boot from now on" ;;
+never) systemctl disable zrn-cpuidle.service; rm -f $MARK ;;
+status)
+	[ -d /sys/module/zrn_cpuidle ] && echo "loaded" || echo "not loaded"
+	[ -e $MARK ] && echo "mark present: the last load did not finish"
+	systemctl is-enabled zrn-cpuidle.service 2>/dev/null
+	cat /sys/devices/system/cpu/cpuidle/current_driver 2>/dev/null
+	for c in /sys/devices/system/cpu/cpu[0-9]*/cpuidle/state1; do
+		[ -e "$c/time" ] && echo "$(echo $c | cut -d/ -f6): $(( $(cat $c/time) / 1000 )) ms asleep, $(cat $c/usage) times"
+	done ;;
+*) echo "usage: zrn-cpuidle try | keep | never | status"; exit 2 ;;
+esac

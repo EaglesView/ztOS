@@ -1,0 +1,11 @@
+[Unit]
+Description=Idle cores power down (zrn-cpuidle): not enabled until `zrn-cpuidle keep`
+After=multi-user.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/sbin/zrn-cpuidle start
+
+[Install]
+WantedBy=graphical.target

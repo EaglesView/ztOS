@@ -1,0 +1,19 @@
+#!/bin/sh
+# Load the sound driver (snd-zrn-abox and what it needs), once the system is up.
+#
+# It is loaded from here and not from modules-load.d because it starts a DSP
+# and pokes hardware the kernel knows nothing about: if that ever stops the
+# kernel, the phone restarts, and it must not try again on every boot. A mark
+# is left before loading and removed after; while the mark is there, loading
+# is skipped. Remove /var/lib/ztoscirrusaudio/loading to try again.
+MARK=/var/lib/ztoscirrusaudio/loading
+mkdir -p /var/lib/ztoscirrusaudio
+if [ -e "$MARK" ]; then
+	echo "ztoscirrusaudio: the last attempt did not finish; not loading. Remove $MARK to retry."
+	exit 0
+fi
+[ -e /proc/asound/ZrnAbox ] && exit 0
+touch "$MARK"; sync
+modprobe snd-zrn-abox || { echo "ztoscirrusaudio: the driver did not load"; rm -f "$MARK"; exit 1; }
+sleep 2		# long enough for a fault to show
+rm -f "$MARK"; sync
