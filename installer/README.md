@@ -50,6 +50,8 @@ ztOS stay off there.
 
 ## Installing on a Galaxy S9 (SM-G960, "starlte")
 
+> **Read the [known quirks](../README.md#known-quirks) first** (the modem and sensor hub sometimes need a pass through TWRP).
+>
 > **This erases the phone.** Android and everything in the phone's user data
 > are replaced. The phone's identity (IMEI and modem calibration, in the EFS
 > partitions) is never touched.
