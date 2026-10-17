@@ -269,7 +269,7 @@ echo LANG=en_US.UTF-8 > "$R/etc/locale.conf"
 step "turning on ztOS's services"
 # (systemd-resolved: names; NetworkManager hands it each network's DNS)
 # (systemd-pstore: the kernel log of a crash or hang is kept in /var/lib/systemd/pstore)
-for u in greetd NetworkManager systemd-resolved sshd systemd-pstore ztoscoresensorframework ztos-update-check.timer; do
+for u in greetd NetworkManager systemd-resolved sshd systemd-pstore ztos-pstore-keep ztoscoresensorframework ztos-update-check.timer; do
 	ch systemctl enable "$u" > /dev/null 2>&1
 done
 for u in systemd-networkd getty@tty1; do
