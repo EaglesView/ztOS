@@ -33,10 +33,14 @@ enum action {
 	ACT_GO,			/* commit the typed URL */
 	ACT_MENU_PICK,		/* arg: which menu item */
 	ACT_MENU_CANCEL,
+	ACT_EDIT_PICK,		/* the address bar's hold menu; arg: which item */
+	ACT_EDIT_CANCEL,
 };
 
 static const char *const MENU_ITEMS[] = { "tabs", "home", "forward" };
 #define MENU_N 3
+static const char *const EDIT_ITEMS[] = { "copy", "paste", "select all" };
+#define EDIT_N 3
 
 #define MAX_TABS	12
 #define BAR_H		56	/* the bottom address bar */
@@ -57,6 +61,8 @@ static struct {
 	char edit[1024];
 	int edit_len;
 	bool menu_open;		/* the "..." menu is showing */
+	bool edit_menu;		/* the address bar's copy/paste menu is showing */
+	bool select_all;	/* the address text is selected: typing replaces it */
 	bool started;		/* the first tab has been opened */
 	char data_dir[512];
 } B;
@@ -237,9 +243,21 @@ static double draw_web(cairo_t *cr, int page) {
 	rounded(cr, bx, byy, bw, bh, 2);
 	cairo_fill(cr);
 	const char *shown = B.editing ? B.edit : (t->url[0] ? t->url : "");
-	cairo_set_source_rgb(cr, 0.12, 0.12, 0.12);
 	char line[1100];
-	snprintf(line, sizeof(line), "%s%s", shown, B.editing ? "|" : "");
+	if (B.editing && B.select_all && B.edit_len > 0) {
+		/* all of it selected, as Windows Phone does on tap: an accent
+		 * highlight with the text in white; the next key replaces it */
+		double tw = zmc_text_width(shown, FONT_REGULAR, 15);
+		if (tw > bw - 44) tw = bw - 44;
+		accent(cr);
+		cairo_rectangle(cr, bx + 6, byy + 4, tw + 4, bh - 8);
+		cairo_fill(cr);
+		cairo_set_source_rgb(cr, 1, 1, 1);
+		snprintf(line, sizeof(line), "%s", shown);
+	} else {
+		cairo_set_source_rgb(cr, 0.12, 0.12, 0.12);
+		snprintf(line, sizeof(line), "%s%s", shown, B.editing ? "|" : "");
+	}
 	zmc_text_line(cr, line, FONT_REGULAR, 15, bx + 8, byy + 6, bw - 44);
 	zmc_add_hit(bx, by, bw - 36, BAR_H, ACT_ADDRESS, 0);
 
@@ -263,6 +281,9 @@ static double draw_web(cairo_t *cr, int page) {
 	/* the "..." menu, from the bottom up */
 	if (B.menu_open) {
 		zmc_menu(cr, by - MENU_N * 52 - 8, MENU_ITEMS, MENU_N, ACT_MENU_PICK, ACT_MENU_CANCEL);
+	}
+	if (B.edit_menu) {
+		zmc_menu(cr, by - EDIT_N * 52 - 8, EDIT_ITEMS, EDIT_N, ACT_EDIT_PICK, ACT_EDIT_CANCEL);
 	}
 	return zmc.height;
 }
@@ -304,6 +325,79 @@ static double render(cairo_t *cr, int page) {
 
 /* ---- input --------------------------------------------------------------- */
 
+/* the system clipboard, through wl-clipboard */
+static void clip_copy(const char *text) {
+	FILE *f = popen("wl-copy", "w");
+	if (f) {
+		fputs(text, f);
+		pclose(f);
+	}
+}
+
+static void clip_paste(char *out, size_t size) {
+	out[0] = 0;
+	FILE *f = popen("wl-paste --no-newline 2>/dev/null", "r");
+	if (f) {
+		size_t n = fread(out, 1, size - 1, f);
+		out[n] = 0;
+		pclose(f);
+	}
+	for (char *c = out; *c; c++) {
+		if (*c == '\n' || *c == '\r' || *c == '\t') *c = ' ';	/* one line */
+	}
+}
+
+static void start_editing(bool select) {
+	if (!B.editing) {
+		B.editing = true;
+		snprintf(B.edit, sizeof(B.edit), "%s", tab()->url);
+		B.edit_len = strlen(B.edit);
+		zmc_keyboard(true);
+	}
+	B.select_all = select;
+}
+
+static void edit_pick(int which) {
+	switch (which) {
+	case 0:	/* copy: what is being typed, or the page's address */
+		clip_copy(B.editing ? B.edit : tab()->url);
+		break;
+	case 1: {	/* paste: replaces a selection, else goes on the end */
+		char pasted[1024];
+		clip_paste(pasted, sizeof(pasted));
+		if (!pasted[0]) break;
+		start_editing(false);
+		if (B.select_all || !B.edit_len) {
+			B.edit_len = 0;
+			B.edit[0] = 0;
+		}
+		size_t n = strlen(pasted);
+		if (B.edit_len + n < sizeof(B.edit) - 1) {
+			memcpy(B.edit + B.edit_len, pasted, n);
+			B.edit_len += n;
+			B.edit[B.edit_len] = 0;
+		}
+		B.select_all = false;
+		break;
+	}
+	case 2:
+		start_editing(true);
+		break;
+	}
+}
+
+/* a finger rested on the address bar: copy / paste / select all */
+static bool hold(int action, int arg) {
+	(void)arg;
+	if (action != ACT_ADDRESS) {
+		return false;
+	}
+	B.menu_open = false;
+	B.edit_menu = true;
+	zmc_redraw();
+	return true;
+}
+
 static void menu_pick(int which) {
 	switch (which) {
 	case 0: zmc_go(P_TABS, 1); break;			/* tabs */
@@ -315,13 +409,23 @@ static void menu_pick(int which) {
 static void activate(int action, int arg) {
 	switch (action) {
 	case ACT_ADDRESS:
-		B.editing = true;
-		snprintf(B.edit, sizeof(B.edit), "%s", tab()->url);
-		B.edit_len = strlen(B.edit);
-		zmc_keyboard(true);
+		/* the first tap selects the whole address (typing replaces it); a
+		 * tap while editing drops the selection to type on the end */
+		start_editing(!B.editing);
+		zmc_redraw();
+		break;
+	case ACT_EDIT_PICK:
+		B.edit_menu = false;
+		edit_pick(arg);
+		zmc_redraw();
+		break;
+	case ACT_EDIT_CANCEL:
+		B.edit_menu = false;
+		zmc_redraw();
 		break;
 	case ACT_GO:
 		B.editing = false;
+		B.select_all = false;
 		zmc_keyboard(false);
 		navigate(B.edit);
 		break;
@@ -362,9 +466,16 @@ static void activate(int action, int arg) {
 }
 
 static bool back(void) {
+	if (B.edit_menu || B.menu_open) {
+		B.edit_menu = B.menu_open = false;
+		zmc_redraw();
+		return true;
+	}
 	if (B.editing) {
 		B.editing = false;
+		B.select_all = false;
 		zmc_keyboard(false);
+		zmc_redraw();
 		return true;
 	}
 	if (zmc.page == P_TABS) {
@@ -381,6 +492,16 @@ static bool back(void) {
 static void text(const char *typed) {
 	if (!B.editing) {
 		return;
+	}
+	if (B.select_all && strcmp(typed, "\n") != 0) {
+		/* the selection goes; a backspace only clears it */
+		B.edit_len = 0;
+		B.edit[0] = 0;
+		B.select_all = false;
+		if (strcmp(typed, "\b") == 0) {
+			zmc_redraw();
+			return;
+		}
 	}
 	if (strcmp(typed, "\n") == 0) {
 		activate(ACT_GO, 0);
@@ -432,7 +553,7 @@ static bool touch(int phase, int id, double x, double y, uint32_t time) {
 	if (phase == 0) {
 		int cx, cy, cw, ch;
 		content_box(&cx, &cy, &cw, &ch);
-		if (zmc.page != P_WEB || B.n_tabs == 0 || !tab()->view || B.menu_open ||
+		if (zmc.page != P_WEB || B.n_tabs == 0 || !tab()->view || B.menu_open || B.edit_menu ||
 				y >= cy + ch) {
 			return false;
 		}
@@ -483,6 +604,7 @@ static const struct zmc_app app = {
 	.activate = activate,
 	.back = back,
 	.text = text,
+	.hold = hold,
 	.arrived = arrived,
 	.overlay = overlay,
 	.touch = touch,
