@@ -644,7 +644,10 @@ int main(int argc, char **argv) {
 	 * where H.264 (libav, NEON, threaded) costs far less than VP9 or AV1.
 	 * Hide those from WebKit and sites (YouTube) serve H.264 instead. */
 	setenv("GST_PLUGIN_FEATURE_RANK",
-		"vp9dec:NONE,avdec_vp9:NONE,vp8dec:NONE,avdec_vp8:NONE,avdec_av1:NONE,dav1ddec:NONE,av1dec:NONE", 0);
+		"vp9dec:NONE,avdec_vp9:NONE,vp8dec:NONE,avdec_vp8:NONE,avdec_av1:NONE,dav1ddec:NONE,av1dec:NONE,"
+		/* the MFC (media/) stalls on YouTube's streams with error 0x37:
+		 * software decoding until that is fixed */
+		"v4l2h264dec:NONE,v4l2h265dec:NONE,v4l2mpeg4dec:NONE,v4l2mpeg2dec:NONE,v4l2h263dec:NONE", 0);
 	const char *home = getenv("HOME");
 	snprintf(B.data_dir, sizeof(B.data_dir), "%s/.local/share/ztbrowser", home ? home : "/tmp");
 	if (argc > 1 && argv[1][0]) {
