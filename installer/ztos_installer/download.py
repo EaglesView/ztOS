@@ -13,7 +13,7 @@ from pathlib import Path
 
 from .build import ROOT, WORK, Fail, say
 
-REPO = "z3r0n3br4instorm/ztOS"
+REPO = "Zerone-Laboratories/ztOS"
 API_URL = f"https://api.github.com/repos/{REPO}/releases/latest"
 
 
