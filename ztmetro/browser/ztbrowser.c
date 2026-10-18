@@ -177,6 +177,25 @@ static void accent(cairo_t *cr) {
 		((zmc.accent >> 8) & 0xff) / 255.0, (zmc.accent & 0xff) / 255.0);
 }
 
+/* the Windows Phone "windows/tabs" mark: two overlapping squares */
+static void tabs_glyph(cairo_t *cr, double cx, double cy) {
+	cairo_set_line_width(cr, 2);
+	cairo_set_source_rgb(cr, 0.9, 0.9, 0.9);
+	cairo_rectangle(cr, cx - 9, cy - 5, 13, 13);
+	cairo_stroke(cr);
+	cairo_rectangle(cr, cx - 3, cy - 11, 13, 13);
+	cairo_stroke(cr);
+}
+
+static void rounded(cairo_t *cr, double x, double y, double w, double h, double r) {
+	cairo_new_sub_path(cr);
+	cairo_arc(cr, x + w - r, y + r, r, -1.5708, 0);
+	cairo_arc(cr, x + w - r, y + h - r, r, 0, 1.5708);
+	cairo_arc(cr, x + r, y + h - r, r, 1.5708, 3.1416);
+	cairo_arc(cr, x + r, y + r, r, 3.1416, 4.7124);
+	cairo_close_path(cr);
+}
+
 static double draw_web(cairo_t *cr, int page) {
 	/* the content area is the subsurface; paint it black underneath so nothing
 	 * of an old page shows through while a new one is still blank */
@@ -186,25 +205,43 @@ static double draw_web(cairo_t *cr, int page) {
 
 	struct tab *t = tab();
 	double by = zmc.height - BAR_H;
+	if (B.editing) {
+		/* keep the bar above the keyboard: its bottom is the window's bottom */
+		zmc_osk_box((int)zmc.height);
+	}
 
-	/* the bottom address bar: a dark strip, the URL, a reload/stop glyph */
-	cairo_set_source_rgb(cr, 0.12, 0.12, 0.12);
+	/* the bottom bar, black, as Windows Phone 8.1's Internet Explorer: the
+	 * windows/tabs mark, a white rounded address box, refresh/stop, and more */
+	cairo_set_source_rgb(cr, 0, 0, 0);
 	cairo_rectangle(cr, 0, by, zmc.width, BAR_H);
 	cairo_fill(cr);
 
+	/* windows/tabs on the far left */
+	tabs_glyph(cr, 26, by + BAR_H / 2.0);
+	zmc_add_hit(0, by, 52, BAR_H, ACT_TABS, 0);
+
+	/* the white rounded address box */
+	double bx = 52, bw = zmc.width - bx - 108, bh = 36, byy = by + (BAR_H - bh) / 2.0;
+	cairo_set_source_rgb(cr, 1, 1, 1);
+	rounded(cr, bx, byy, bw, bh, 4);
+	cairo_fill(cr);
 	const char *shown = B.editing ? B.edit : (t->url[0] ? t->url : "search or enter address");
 	bool placeholder = !B.editing && !t->url[0];
-	cairo_set_source_rgb(cr, placeholder ? 0.5 : 0.9, placeholder ? 0.5 : 0.9, placeholder ? 0.5 : 0.9);
-	zmc_text_line(cr, shown, FONT_REGULAR, 15, 16, by + 18, zmc.width - 150);
-	zmc_add_hit(0, by, zmc.width - 120, BAR_H, ACT_ADDRESS, 0);
+	if (placeholder) {
+		cairo_set_source_rgb(cr, 0.5, 0.5, 0.5);
+	} else {
+		cairo_set_source_rgb(cr, 0.1, 0.1, 0.1);
+	}
+	zmc_text_line(cr, shown, FONT_REGULAR, 15, bx + 12, byy + 9, bw - 20);
+	zmc_add_hit(bx, by, bw, BAR_H, ACT_ADDRESS, 0);
 
-	/* reload / stop, and the "..." */
+	/* refresh / stop (a circle), then the "..." */
 	cairo_set_source_rgb(cr, 0.9, 0.9, 0.9);
-	zmc_text(cr, t->loading ? u8"" : u8"", "Segoe MDL2 Assets", 18,
-		zmc.width - 108, by + 16, 0);	/* E711 cancel, E72C refresh */
-	zmc_add_hit(zmc.width - 120, by, 56, BAR_H, ACT_RELOAD, 0);
-	zmc_text(cr, u8"", "Segoe MDL2 Assets", 18, zmc.width - 46, by + 16, 0);	/* more */
-	zmc_add_hit(zmc.width - 60, by, 60, BAR_H, ACT_MENU, 0);
+	zmc_text(cr, t->loading ? u8"" : u8"", "Segoe MDL2 Assets", 20,
+		zmc.width - 96, by + 16, 0);	/* E711 cancel, E72C refresh */
+	zmc_add_hit(zmc.width - 108, by, 54, BAR_H, ACT_RELOAD, 0);
+	zmc_text(cr, u8"", "Segoe MDL2 Assets", 20, zmc.width - 42, by + 16, 0);	/* more */
+	zmc_add_hit(zmc.width - 54, by, 54, BAR_H, ACT_MENU, 0);
 
 	/* the thin progress line above the bar */
 	if (t->loading && t->progress > 0) {
@@ -354,11 +391,29 @@ static void text(const char *typed) {
 	}
 }
 
+/* draw the current page's pixels over the content area, every frame at rest */
+static void overlay(int page) {
+	if (page != P_WEB || B.n_tabs == 0 || !tab()->view) {
+		return;
+	}
+	int x, y, w, h;
+	content_box(&x, &y, &w, &h);
+	webview_composite(tab()->view, x, y, w, h);
+}
+
+/* zmc's loop is Wayland-only; run WebKit's GLib work on a fast tick */
+static void pump(void) {
+	webview_pump();
+}
+
+static char home_url[1024] = "about:blank";
+
 /* the first page has arrived, so the surface exists: open the first tab now */
 static void arrived(int page) {
 	if (!B.started && page == P_WEB) {
 		B.started = true;
-		tab_open("about:blank");
+		tab_open(home_url);
+		zmc_every(16, pump);
 	}
 }
 
@@ -371,10 +426,14 @@ static const struct zmc_app app = {
 	.back = back,
 	.text = text,
 	.arrived = arrived,
+	.overlay = overlay,
 };
 
-int main(void) {
+int main(int argc, char **argv) {
 	const char *home = getenv("HOME");
 	snprintf(B.data_dir, sizeof(B.data_dir), "%s/.local/share/ztbrowser", home ? home : "/tmp");
+	if (argc > 1 && argv[1][0]) {
+		snprintf(home_url, sizeof(home_url), "%s", argv[1]);
+	}
 	return zmc_run(&app, P_WEB);
 }
