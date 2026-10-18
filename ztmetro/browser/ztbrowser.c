@@ -183,16 +183,6 @@ static void accent(cairo_t *cr) {
 		((zmc.accent >> 8) & 0xff) / 255.0, (zmc.accent & 0xff) / 255.0);
 }
 
-/* the Windows Phone "windows/tabs" mark: two overlapping squares */
-static void tabs_glyph(cairo_t *cr, double cx, double cy) {
-	cairo_set_line_width(cr, 2);
-	cairo_set_source_rgb(cr, 0.9, 0.9, 0.9);
-	cairo_rectangle(cr, cx - 9, cy - 5, 13, 13);
-	cairo_stroke(cr);
-	cairo_rectangle(cr, cx - 3, cy - 11, 13, 13);
-	cairo_stroke(cr);
-}
-
 static void rounded(cairo_t *cr, double x, double y, double w, double h, double r) {
 	cairo_new_sub_path(cr);
 	cairo_arc(cr, x + w - r, y + r, r, -1.5708, 0);
