@@ -8,6 +8,8 @@
  * blank because the subsurface covers it.
  */
 #define _GNU_SOURCE
+#include <math.h>
+#include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -84,6 +86,9 @@ static void on_load(void *user, enum wv_load state) {
 	if (state == WV_FINISHED || state == WV_FAILED) {
 		t->progress = 0;
 	}
+	if (t == tab()) {
+		zmc_busy(t->loading);	/* the Windows Phone loading dots */
+	}
 	zmc_redraw();
 }
 static void on_secure(void *user, bool ok) {
@@ -137,6 +142,7 @@ static void tab_select(int i) {
 		webview_show(B.tabs[k].view, k == i);
 	}
 	B.cur = i;
+	zmc_busy(B.tabs[i].loading);
 }
 
 static void tab_close(int i) {
@@ -210,45 +216,60 @@ static double draw_web(cairo_t *cr, int page) {
 		zmc_osk_box((int)zmc.height);
 	}
 
-	/* the bottom bar, black, as Windows Phone 8.1's Internet Explorer: the
-	 * windows/tabs mark, a white rounded address box, refresh/stop, and more */
-	cairo_set_source_rgb(cr, 0, 0, 0);
+	/* the bottom bar as Windows Phone 8.1's Internet Explorer draws it: a
+	 * near-black strip; on the left a round button with the tabs mark; a
+	 * light, nearly square address box with refresh/stop inside its right
+	 * end; and the app bar's three dots tucked in the top-right corner */
+	cairo_set_source_rgb(cr, 0.12, 0.12, 0.12);
 	cairo_rectangle(cr, 0, by, zmc.width, BAR_H);
 	cairo_fill(cr);
 
-	/* windows/tabs on the far left */
-	tabs_glyph(cr, 26, by + BAR_H / 2.0);
-	zmc_add_hit(0, by, 52, BAR_H, ACT_TABS, 0);
-
-	/* the white rounded address box */
-	double bx = 52, bw = zmc.width - bx - 108, bh = 36, byy = by + (BAR_H - bh) / 2.0;
+	/* the round tabs button */
+	double cx = 26, cy = by + BAR_H / 2.0 + 2;
 	cairo_set_source_rgb(cr, 1, 1, 1);
-	rounded(cr, bx, byy, bw, bh, 4);
-	cairo_fill(cr);
-	const char *shown = B.editing ? B.edit : (t->url[0] ? t->url : "search or enter address");
-	bool placeholder = !B.editing && !t->url[0];
-	if (placeholder) {
-		cairo_set_source_rgb(cr, 0.5, 0.5, 0.5);
+	cairo_set_line_width(cr, 2);
+	cairo_arc(cr, cx, cy, 15, 0, 2 * 3.14159265);
+	cairo_stroke(cr);
+	cairo_set_line_width(cr, 1.5);
+	cairo_rectangle(cr, cx - 7, cy - 3, 9, 9);
+	cairo_stroke(cr);
+	cairo_rectangle(cr, cx - 3, cy - 7, 9, 9);
+	cairo_stroke(cr);
+	zmc_add_hit(0, by, 50, BAR_H, ACT_TABS, 0);
+
+	/* the address box: light grey, 2-point corners, text in near-black */
+	double bx = 50, bw = zmc.width - bx - 34, bh = 32, byy = by + (BAR_H - bh) / 2.0 + 2;
+	if (B.editing) {
+		cairo_set_source_rgb(cr, 1, 1, 1);
 	} else {
-		cairo_set_source_rgb(cr, 0.1, 0.1, 0.1);
+		cairo_set_source_rgb(cr, 0.86, 0.86, 0.86);
 	}
-	zmc_text_line(cr, shown, FONT_REGULAR, 15, bx + 12, byy + 9, bw - 20);
-	zmc_add_hit(bx, by, bw, BAR_H, ACT_ADDRESS, 0);
+	rounded(cr, bx, byy, bw, bh, 2);
+	cairo_fill(cr);
+	const char *shown = B.editing ? B.edit : (t->url[0] ? t->url : "");
+	cairo_set_source_rgb(cr, 0.12, 0.12, 0.12);
+	char line[1100];
+	snprintf(line, sizeof(line), "%s%s", shown, B.editing ? "|" : "");
+	zmc_text_line(cr, line, FONT_REGULAR, 15, bx + 8, byy + 6, bw - 44);
+	zmc_add_hit(bx, by, bw - 36, BAR_H, ACT_ADDRESS, 0);
 
-	/* refresh / stop (a circle), then the "..." */
-	cairo_set_source_rgb(cr, 0.9, 0.9, 0.9);
-	zmc_text(cr, t->loading ? u8"" : u8"", "Segoe MDL2 Assets", 20,
-		zmc.width - 96, by + 16, 0);	/* E711 cancel, E72C refresh */
-	zmc_add_hit(zmc.width - 108, by, 54, BAR_H, ACT_RELOAD, 0);
-	zmc_text(cr, u8"", "Segoe MDL2 Assets", 20, zmc.width - 42, by + 16, 0);	/* more */
-	zmc_add_hit(zmc.width - 54, by, 54, BAR_H, ACT_MENU, 0);
+	/* refresh or stop, inside the box at its right end */
+	if (!B.editing) {
+		cairo_set_source_rgb(cr, 0.12, 0.12, 0.12);
+		zmc_text(cr, t->loading ? u8"" : u8"", "Segoe MDL2 Assets", 16,
+			bx + bw - 28, byy + 8, 0);	/* E711 cancel, E72C refresh */
+		zmc_add_hit(bx + bw - 40, by, 40, BAR_H, ACT_RELOAD, 0);
+	}
 
-	/* the thin progress line above the bar */
-	if (t->loading && t->progress > 0) {
-		accent(cr);
-		cairo_rectangle(cr, 0, by - PROGRESS_H, zmc.width * t->progress, PROGRESS_H);
+	/* the app bar's dots, small, in the top-right corner of the bar */
+	cairo_set_source_rgb(cr, 1, 1, 1);
+	for (int i = 0; i < 3; i++) {
+		cairo_arc(cr, zmc.width - 22 + i * 6, by + 8, 1.5, 0, 2 * 3.14159265);
 		cairo_fill(cr);
 	}
+	zmc_add_hit(zmc.width - 34, by, 34, BAR_H, ACT_MENU, 0);
+	/* (the progress line and the loading dots are drawn on the GPU, in
+	 * overlay(), so they move without redrawing this page) */
 	/* the "..." menu, from the bottom up */
 	if (B.menu_open) {
 		zmc_menu(cr, by - MENU_N * 52 - 8, MENU_ITEMS, MENU_N, ACT_MENU_PICK, ACT_MENU_CANCEL);
@@ -399,6 +420,20 @@ static void overlay(int page) {
 	int x, y, w, h;
 	content_box(&x, &y, &w, &h);
 	webview_composite(tab()->view, x, y, w, h);
+
+	struct tab *t = tab();
+	if (!t->loading) {
+		return;
+	}
+	double line_y = h - PROGRESS_H;	/* just above the bar */
+	if (t->progress > 0.08) {
+		zmc_gpu_rect(0, line_y, w * t->progress, PROGRESS_H,
+			((zmc.accent >> 16) & 0xff) / 255.0, ((zmc.accent >> 8) & 0xff) / 255.0,
+			(zmc.accent & 0xff) / 255.0);
+	}
+	/* the moving Windows Phone dots come from zmc_busy() (see on_load); its
+	 * frames keep this overlay redrawing while the page loads. zmc_present()
+	 * must not be called here: it draws at once and would call us again. */
 }
 
 /* zmc's loop is Wayland-only; run WebKit's GLib work on a fast tick */
