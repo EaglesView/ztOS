@@ -436,6 +436,39 @@ static void overlay(int page) {
 	 * must not be called here: it draws at once and would call us again. */
 }
 
+/* a finger on the page goes to WebKit whole (scroll, tap); the bar's own
+ * controls stay with zmc */
+static bool touch(int phase, int id, double x, double y, uint32_t time) {
+	if (phase == 0) {
+		int cx, cy, cw, ch;
+		content_box(&cx, &cy, &cw, &ch);
+		if (zmc.page != P_WEB || B.n_tabs == 0 || !tab()->view || B.menu_open ||
+				y >= cy + ch) {
+			return false;
+		}
+		if (B.editing) {	/* a tap on the page puts the address away */
+			B.editing = false;
+			zmc_keyboard(false);
+			zmc_redraw();
+		}
+		webview_touch_down(tab()->view, id, x - cx, y - cy, time);
+		return true;
+	}
+	if (B.n_tabs == 0 || !tab()->view) {
+		return true;
+	}
+	if (phase == 1) {
+		int cx, cy, cw, ch;
+		content_box(&cx, &cy, &cw, &ch);
+		webview_touch_motion(tab()->view, id, x - cx, y - cy, time);
+	} else if (phase == 2) {
+		webview_touch_up(tab()->view, id, time);
+	} else {
+		webview_touch_cancel(tab()->view);
+	}
+	return true;
+}
+
 /* zmc's loop is Wayland-only; run WebKit's GLib work on a fast tick */
 static void pump(void) {
 	webview_pump();
@@ -462,6 +495,8 @@ static const struct zmc_app app = {
 	.text = text,
 	.arrived = arrived,
 	.overlay = overlay,
+	.touch = touch,
+	.fixed = true,
 };
 
 int main(int argc, char **argv) {
