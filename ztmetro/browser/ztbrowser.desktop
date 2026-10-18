@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Internet Explorer
+Comment=Browse the web
+Exec=ztbrowser
+Terminal=false
+Type=Application
+Icon=ztbrowser
+Categories=Network;WebBrowser;

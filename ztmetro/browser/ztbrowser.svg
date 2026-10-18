@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="150" height="150" viewBox="0 0 150 150">
+  <rect width="150" height="150" fill="#0050ef"/>
+  <!-- a plain lowercase 'e', the Internet Explorer mark, in Segoe-ish strokes -->
+  <text x="75" y="112" font-family="Segoe UI, Selawik, sans-serif" font-size="110"
+        font-weight="300" text-anchor="middle" fill="#ffffff">e</text>
+</svg>
