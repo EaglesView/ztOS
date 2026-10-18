@@ -63,6 +63,8 @@ static struct {
 	bool menu_open;		/* the "..." menu is showing */
 	bool edit_menu;		/* the address bar's copy/paste menu is showing */
 	bool select_all;	/* the address text is selected: typing replaces it */
+	bool web_typing;	/* a text field in the page has focus: keys go there */
+	int web_caret;		/* where its caret ends, in points (-1: not known) */
 	bool started;		/* the first tab has been opened */
 	char data_dir[512];
 } B;
@@ -103,9 +105,32 @@ static void on_secure(void *user, bool ok) {
 	zmc_redraw();
 }
 
+/* a text field in the page took focus (or let go): the keyboard follows it */
+static void on_ime(void *user, bool active, int caret_bottom) {
+	struct tab *t = user;
+	if (t != tab()) {
+		return;
+	}
+	B.web_typing = active;
+	B.web_caret = caret_bottom;
+	if (active) {
+		if (B.editing) {	/* the page took the keys from the address bar */
+			B.editing = false;
+			B.select_all = false;
+		}
+		zmc_keyboard(true);
+		if (caret_bottom >= 0) {
+			zmc_osk_box(caret_bottom + 8);	/* lift the page just enough */
+		}
+	} else if (!B.editing) {
+		zmc_keyboard(false);
+	}
+	zmc_redraw();
+}
+
 static const struct wv_delegate DELEGATE_PROTO = {
 	.title = on_title, .uri = on_uri, .progress = on_progress,
-	.load = on_load, .secure = on_secure,
+	.load = on_load, .secure = on_secure, .ime = on_ime,
 };
 
 /* ---- tabs ---------------------------------------------------------------- */
@@ -491,6 +516,9 @@ static bool back(void) {
 
 static void text(const char *typed) {
 	if (!B.editing) {
+		if (B.web_typing && B.n_tabs > 0 && tab()->view) {
+			webview_key(tab()->view, typed);	/* into the page's text field */
+		}
 		return;
 	}
 	if (B.select_all && strcmp(typed, "\n") != 0) {
@@ -592,7 +620,7 @@ static void arrived(int page) {
 	if (!B.started && page == P_WEB) {
 		B.started = true;
 		tab_open(home_url);
-		zmc_every(16, pump);
+		pump();	/* from here on it schedules itself on GLib's own fds and timers */
 	}
 }
 
@@ -612,6 +640,11 @@ static const struct zmc_app app = {
 };
 
 int main(int argc, char **argv) {
+	/* There is no hardware video decoder here, so video is decoded on the CPU,
+	 * where H.264 (libav, NEON, threaded) costs far less than VP9 or AV1.
+	 * Hide those from WebKit and sites (YouTube) serve H.264 instead. */
+	setenv("GST_PLUGIN_FEATURE_RANK",
+		"vp9dec:NONE,avdec_vp9:NONE,vp8dec:NONE,avdec_vp8:NONE,avdec_av1:NONE,dav1ddec:NONE,av1dec:NONE", 0);
 	const char *home = getenv("HOME");
 	snprintf(B.data_dir, sizeof(B.data_dir), "%s/.local/share/ztbrowser", home ? home : "/tmp");
 	if (argc > 1 && argv[1][0]) {
