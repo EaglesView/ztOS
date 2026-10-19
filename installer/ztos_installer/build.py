@@ -174,6 +174,8 @@ cp -a "$SRC/os/overlay/." "$R/"
 cp -a "$SRC/os/overlay-$TARGET/." "$R/"
 if [ "$TARGET" = starlte ]; then
 	cp -a "$SRC/rootfs/overlay/." "$R/"         # the phone's own: USB link, charger, fallbacks
+	# the panel's brightness table is made from its calibration (ztos-panel-bl)
+	install -Dm755 "$SRC/kernel/s9p-bl-table.py" "$R/usr/local/lib/ztos/s9p-bl-table.py"
 	install -Dm644 -t "$R/usr/lib/firmware/brcm" "$SRC"/firmware/bcmdhd* "$SRC"/firmware/nvram*
 	for f in "$SRC"/firmware/calliope_*.bin; do
 		[ -f "$f" ] && install -Dm644 -t "$R/usr/lib/firmware" "$f"
@@ -277,7 +279,7 @@ for u in systemd-networkd getty@tty1; do
 done
 if [ "$TARGET" = starlte ]; then
 	for u in zboot-usb-gadget zboot-firstboot zboot-charge-hold zrn-charge zrn-cpuidle ztoscirrusaudio ztoscsf-sensorhub \
-			ztoscsf-sensord ztoscorenetworking-modem ztoscorenetworking zrnperfd ztos-panel-selfmask; do
+			ztoscsf-sensord ztoscorenetworking-modem ztoscorenetworking zrnperfd ztos-panel-selfmask ztos-panel-bl; do
 		ch systemctl enable "$u" > /dev/null 2>&1 || echo "(no $u)"
 	done
 fi
