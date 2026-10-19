@@ -47,7 +47,9 @@ read_panel() {
 		mv "$REGS.new" "$REGS"
 }
 
-if [ ! -s "$CACHE" ]; then
+# a newer generator makes a new table (the old one may send packets the
+# panel takes wrong); the calibration read stays
+if [ ! -s "$CACHE" ] || [ "$GEN" -nt "$CACHE" ]; then
 	if [ ! -s "$REGS" ]; then
 		read_panel || { echo "ztos-panel-bl: could not read the panel's calibration" >&2; exit 0; }
 	fi
