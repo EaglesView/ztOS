@@ -54,6 +54,14 @@ if [ ! -s "$CACHE" ]; then
 	python3 "$GEN" -i "$REGS" -o "$CACHE.new" && mv "$CACHE.new" "$CACHE" ||
 		{ echo "ztos-panel-bl: could not make the table" >&2; rm -f "$CACHE.new"; exit 0; }
 fi
+# Samsung's panel init after sleep-out (star_a3_s0_init_cmdtbl): set area,
+# TE on, error flag, FFC, TSP hsync, ISC. Without these the panel took the
+# full brightness set (ELVSS above all) once and then, after its next
+# sleep, stopped its TE: every flip after it timed out and the screen
+# stayed dark. Once sent they hold across the panel's sleeps.
+echo "9F A5 A5; 1A 1F 00 00 00 00; 35 00; 9F 5A 5A; F0 5A 5A; ED 4C; FC 5A 5A; C5 0D 10 B4 3E 01; FC A5 A5; B9 01 B0 81 09 00 00 00 11 03; F6 43; F0 A5 A5" \
+	> "$DEC/panel_cmd" 2>/dev/null ||
+	echo "ztos-panel-bl: panel asleep, init not sent" >&2
 dd if="$CACHE" of="$DEC/bl_table" bs=4096 status=none &&
 	touch "$MARK" &&
 	echo "ztos-panel-bl: brightness table loaded ($(cat /sys/class/backlight/s9p-panel/max_brightness) + 1 levels)"
