@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * ztBrowser: the chrome, in the Windows Phone 8.1 Internet Explorer look.
+ * Superscan: the chrome, in the Windows Phone 8.1 Internet Explorer look.
  *
  * The web page itself is a Wayland subsurface (see webview.c); this file draws
  * only the chrome with the C SDK: the address bar along the bottom, the thin
@@ -11,6 +11,7 @@
 #include <math.h>
 #include <time.h>
 #include <stdio.h>
+#include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
 #include <wayland-client.h>
@@ -625,8 +626,8 @@ static void arrived(int page) {
 }
 
 static const struct zmc_app app = {
-	.app_id = "ztbrowser",
-	.title = "Internet Explorer",
+	.app_id = "superscan",
+	.title = "Superscan",
 	.caps = "INTERNET EXPLORER",
 	.render = render,
 	.activate = activate,
@@ -645,11 +646,19 @@ int main(int argc, char **argv) {
 	 * Hide those from WebKit and sites (YouTube) serve H.264 instead. */
 	setenv("GST_PLUGIN_FEATURE_RANK",
 		"vp9dec:NONE,avdec_vp9:NONE,vp8dec:NONE,avdec_vp8:NONE,avdec_av1:NONE,dav1ddec:NONE,av1dec:NONE,"
-		/* the MFC (media/) stalls on YouTube's streams with error 0x37:
-		 * software decoding until that is fixed */
+		/* the MFC (media/) still stalls on YouTube's MSE streams (error
+		 * 0x22, no key frame): software decoding until that is fixed */
 		"v4l2h264dec:NONE,v4l2h265dec:NONE,v4l2mpeg4dec:NONE,v4l2mpeg2dec:NONE,v4l2h263dec:NONE", 0);
 	const char *home = getenv("HOME");
-	snprintf(B.data_dir, sizeof(B.data_dir), "%s/.local/share/ztbrowser", home ? home : "/tmp");
+	snprintf(B.data_dir, sizeof(B.data_dir), "%s/.local/share/superscan", home ? home : "/tmp");
+	{
+		/* cookies and site data from when it was ztbrowser come along once */
+		char old[600];
+		snprintf(old, sizeof(old), "%s/.local/share/ztbrowser", home ? home : "/tmp");
+		if (access(B.data_dir, F_OK) != 0 && access(old, F_OK) == 0) {
+			rename(old, B.data_dir);
+		}
+	}
 	if (argc > 1 && argv[1][0]) {
 		snprintf(home_url, sizeof(home_url), "%s", argv[1]);
 	}

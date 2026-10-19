@@ -1,8 +1,8 @@
 [Desktop Entry]
-Name=Internet Explorer
+Name=Superscan
 Comment=Browse the web
-Exec=ztbrowser
+Exec=superscan
 Terminal=false
 Type=Application
-Icon=ztbrowser
+Icon=superscan
 Categories=Network;WebBrowser;
