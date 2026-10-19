@@ -7,6 +7,7 @@
 #	zrn-cpuidle keep	load it at every boot from now on
 #	zrn-cpuidle never	stop loading it at boot
 #	zrn-cpuidle status
+#	zrn-cpuidle reset	forget a failed load (the mark) and load it now
 #
 # Loading can freeze the phone, and once the watchdog did not bring it back:
 # try it with the charger in and the phone in reach. A mark is left before
@@ -26,6 +27,9 @@ S2IDLE=${ZRN_CPUIDLE_S2IDLE_SICD:+s2idle_sicd=$ZRN_CPUIDLE_S2IDLE_SICD}
 mkdir -p $D
 
 load() {
+	# kallsyms shows every address as 0 to anyone but root, which looked
+	# like "cpu_suspend not found"
+	[ "$(id -u)" = 0 ] || { echo "zrn-cpuidle: run it as root (sudo zrn-cpuidle $1)"; return 1; }
 	[ -d /sys/module/zrn_cpuidle ] && { echo "zrn-cpuidle: already loaded"; return 0; }
 	[ -e "$KO" ] || { echo "zrn-cpuidle: $KO is not installed"; return 1; }
 	if [ -e $MARK ]; then
@@ -54,7 +58,14 @@ load() {
 }
 
 case "$1" in
-try|start) load ;;
+try|start) load "$1" ;;
+reset)
+	# the person holding the phone says the last stop was not this module
+	# (Devices and Services, "restart"): clear the mark and load it again
+	[ "$(id -u)" = 0 ] || { echo "zrn-cpuidle: run it as root (sudo zrn-cpuidle reset)"; exit 1; }
+	rm -f $MARK; sync
+	# through the service, so its settings (drop-ins) apply and it shows as running
+	exec systemctl restart zrn-cpuidle.service ;;
 keep) systemctl enable zrn-cpuidle.service && echo "zrn-cpuidle: loaded at every boot from now on" ;;
 never) systemctl disable zrn-cpuidle.service; rm -f $MARK ;;
 status)
@@ -72,5 +83,5 @@ status)
 		[ ! -e $P/suspend_entries ] || echo "system SICD: $(cat $P/suspend_entries) sleeps, $(cat $P/attempts) attempts, last error $(cat $P/last_error)"
 		[ ! -e $P/alarm_fires ] || echo "hardware wake alarm: $(cat $P/alarm_fires) fired; MCT late events: $(cat $P/mct_late_events)"
 	fi ;;
-*) echo "usage: zrn-cpuidle try | keep | never | status"; exit 2 ;;
+*) echo "usage: zrn-cpuidle try | keep | never | status | reset"; exit 2 ;;
 esac
