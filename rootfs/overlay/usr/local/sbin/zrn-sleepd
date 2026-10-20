@@ -341,10 +341,11 @@ def main():
 					ENABLED.unlink(missing_ok=True)
 					tell_shell('notify Power|Sleep switched off|Its driver did not load.')
 					continue
-			t0 = time.monotonic()
+			# (monotonic time stops while asleep: boot time does not)
+			t0 = time.clock_gettime(time.CLOCK_BOOTTIME)
 			reason, stat = cycle()
 			sleeps += 1
-			slept = round(time.monotonic() - t0)
+			slept = round(time.clock_gettime(time.CLOCK_BOOTTIME) - t0)
 			log(f'woke: {reason} wake_stat={stat:#010x} after {slept}s')
 			if reason in ('failed', 'aborted'):
 				backoff = time.monotonic() + min(300, 30 * 2 ** min(4, sleeps % 5))
