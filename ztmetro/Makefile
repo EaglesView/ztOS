@@ -20,7 +20,7 @@ endif
 
 all: auth/ztos-polkit-agent sounds/ztos-sounds ztmetro apps/ztapps settings/ztsettings devtest/zrndevtest devices/ztdevices perfd/zrnperfd sensord/ztoscsf-sensord modemd/ztoscorenetworkingd \
 	csf/ztoscsf notifyd/ztnotifyd phone/ztphone messages/ztmessages contacts/ztcontacts files/ztfiles splash/ztos-splash \
-	store/ztstore power/ztpower camera/ztcamera sound/ztsound
+	store/ztstore power/ztpower camera/ztcamera sound/ztsound osial/ztosial
 
 sounds/ztos-sounds: sounds/ztos-sounds.c
 	$(CC) $(CFLAGS) $(WARN) $(shell pkg-config --cflags libpulse) -o $@ $< $(shell pkg-config --libs libpulse) -lm
@@ -71,6 +71,10 @@ devices/ztdevices: devices/ztdevices.c $(CORE_DEPS)
 # File browser: the same ZrnMetroCore pages, tilt and turnstile transitions.
 files/ztfiles: files/ztfiles.c $(CORE_DEPS)
 	$(APP_BUILD) $(shell pkg-config --cflags gio-2.0) -o $@ files/ztfiles.c $(CORE) $(APP_LIBS) $(shell pkg-config --libs gio-2.0)
+
+# OSIAL Management: ztOSIAL's interfaces, whether they answer, and the device's capabilities
+osial/ztosial: osial/ztosial.c $(CORE_DEPS)
+	$(APP_BUILD) $(shell pkg-config --cflags json-c) -o $@ osial/ztosial.c $(CORE) $(APP_LIBS) $(shell pkg-config --libs json-c)
 
 # Power Management: battery fuel gauge, sleep diagnostics, wake history
 power/ztpower: power/ztpower.c $(CORE_DEPS)
@@ -190,6 +194,9 @@ install: check-arch
 	install -Dm644 sound/ztsound.desktop /usr/local/share/applications/ztsound.desktop
 	install -Dm644 sound/ztsound.svg /usr/local/share/icons/hicolor/scalable/apps/ztsound.svg
 	install -Dm755 power/ztpower /usr/local/bin/ztpower
+	install -Dm755 osial/ztosial /usr/local/bin/ztosial
+	install -Dm644 osial/ztosial.desktop /usr/local/share/applications/ztosial.desktop
+	install -Dm644 osial/ztosial.svg /usr/local/share/icons/hicolor/scalable/apps/ztosial.svg
 	install -Dm644 power/ztpower.desktop /usr/local/share/applications/ztpower.desktop
 	install -Dm644 power/ztpower.svg /usr/local/share/icons/hicolor/scalable/apps/ztpower.svg
 	install -Dm755 camera/ztcamera /usr/local/bin/ztcamera
@@ -217,7 +224,7 @@ install: check-arch
 	install -Dm644 csf/ztoscoresensorframework.service /etc/systemd/system/ztoscoresensorframework.service
 
 clean:
-	rm -f sound/ztsound auth/ztos-polkit-agent sounds/ztos-sounds ztmetro apps/ztapps xdg-shell-protocol.h settings/ztsettings devtest/zrndevtest devices/ztdevices power/ztpower perfd/zrnperfd sensord/ztoscsf-sensord modemd/ztoscorenetworkingd csf/ztoscsf notifyd/ztnotifyd splash/ztos-splash \
+	rm -f sound/ztsound osial/ztosial auth/ztos-polkit-agent sounds/ztos-sounds ztmetro apps/ztapps xdg-shell-protocol.h settings/ztsettings devtest/zrndevtest devices/ztdevices power/ztpower perfd/zrnperfd sensord/ztoscsf-sensord modemd/ztoscorenetworkingd csf/ztoscsf notifyd/ztnotifyd splash/ztos-splash \
 		phone/ztphone messages/ztmessages contacts/ztcontacts files/ztfiles store/ztstore camera/ztcamera core/viewporter-protocol.c core/viewporter-client-protocol.h \
 		core/xdg-shell-client-protocol.h core/xdg-shell-protocol.c
 
