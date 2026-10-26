@@ -265,12 +265,23 @@
   .slide:hover .more { text-decoration: underline; text-underline-offset: 0.2em; }
   .carousel-nav { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.6rem 0.75rem; border-top: 1px solid var(--line); }
   .carousel.single .carousel-nav { display: none; }
+  .slide.text .slide-mark { display: flex; flex-direction: column; justify-content: flex-end; gap: 0.4rem; padding: 1.5rem;
+    border-right: 1px solid var(--line); background: var(--ink); color: var(--paper); min-height: 100%; overflow: hidden; overflow-wrap: anywhere; }
+  .slide.text .slide-mark span { font-size: 0.9375rem; opacity: 0.7; }
+  .slide.text .slide-mark b { font-weight: 300; font-stretch: 90%; font-size: clamp(2rem, 4.5vw, 3.25rem); letter-spacing: -0.035em; line-height: 1; }
+  .exp { display: inline-block; font-size: 0.75rem; font-weight: 450; letter-spacing: 0.04em; vertical-align: 0.35em; margin-left: 0.4rem;
+    padding: 0.05rem 0.4rem; border: 1px dashed #e51400; color: #e51400; }
+  .body h3 .exp { font-stretch: 100%; }
+  .carousel .where { display: none; font-size: 0.875rem; color: var(--mute); font-variant-numeric: tabular-nums; }
+  .carousel.many .dots button { display: none; }
+  .carousel.many .where { display: inline; }
   .dots { display: flex; gap: 0.4rem; flex-wrap: wrap; justify-content: center; }
   .dots button { width: 0.7rem; height: 0.7rem; padding: 0; border: 1px solid var(--line); background: transparent; cursor: pointer; }
   .dots button[aria-current="true"] { background: var(--ink); }
   @media (max-width: 760px) {
     .slide { grid-template-columns: 1fr; }
     .slide img { max-height: 280px; border-right: 0; border-bottom: 1px solid var(--line); }
+    .slide.text .slide-mark { border-right: 0; border-bottom: 1px solid var(--line); min-height: 140px; }
   }
   @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
@@ -553,20 +564,37 @@ ztos-sdk logs -f         <span class="c"># what it prints, on the phone</span></
 
   <section class="section" id="devices">
     <div class="wrap">
-      <div><h2>Device list</h2><p class="sub">Phones ztOS runs on, ported and kept up by their maintainers.</p></div>
+      <div><h2>Device list</h2><p class="sub">Phones ztOS runs on: ported by people, or built by ztConflo.</p></div>
       <div class="body">
         <p>Every phone has its own page on <a href="https://devices.ztos.online">devices.ztos.online</a>: what works, its specifications, and a step-by-step installation guide with every command to type. Phones are sorted by maker, and you can search them.</p>
-        <div class="carousel" id="carousel" aria-roledescription="carousel" aria-label="Supported phones">
-          <div class="track" id="track" aria-live="off"><p class="mute" style="padding:1.25rem">Loading the phones…</p></div>
+
+        <h3 id="community-ports">Community Ports</h3>
+        <p>Ported, installed and checked on the phone itself, and reviewed by moderators.</p>
+        <div class="carousel" data-carousel="community" aria-roledescription="carousel" aria-label="Community ports">
+          <div class="track" aria-live="off"><p class="mute" style="padding:1.25rem">Loading the phones…</p></div>
           <div class="carousel-nav">
-            <button class="btn ghost small" type="button" id="prev" aria-label="Previous phone">←</button>
-            <div class="dots" id="dots"></div>
-            <button class="btn ghost small" type="button" id="next" aria-label="Next phone">→</button>
+            <button class="btn ghost small" type="button" data-prev aria-label="Previous phone">←</button>
+            <div class="dots"></div>
+            <button class="btn ghost small" type="button" data-next aria-label="Next phone">→</button>
           </div>
         </div>
-        <div class="actions" style="margin-top:1.25rem">
-          <a class="btn" href="https://devices.ztos.online">Go to devices →</a>
+        <div class="actions" style="margin-top:1rem">
+          <a class="btn" href="https://devices.ztos.online/#/community">Go to devices →</a>
           <a class="btn ghost" href="https://devices.ztos.online/#/add">Add your port</a>
+        </div>
+
+        <h3 id="cross-ports">Cross-Ports <span class="exp">EXPERIMENTAL</span></h3>
+        <p>Phones ztConflo can build ztOS for, from postmarketOS's ports on mainline Linux. Most are untried; the list updates itself every day.</p>
+        <div class="carousel" data-carousel="cross" aria-roledescription="carousel" aria-label="Cross ports">
+          <div class="track" aria-live="off"><p class="mute" style="padding:1.25rem">Loading the phones…</p></div>
+          <div class="carousel-nav">
+            <button class="btn ghost small" type="button" data-prev aria-label="Previous phone">←</button>
+            <div class="dots"></div>
+            <button class="btn ghost small" type="button" data-next aria-label="Next phone">→</button>
+          </div>
+        </div>
+        <div class="actions" style="margin-top:1rem">
+          <a class="btn" href="https://devices.ztos.online/#/cross">Go to cross-ports →</a>
         </div>
       </div>
     </div>
@@ -714,15 +742,12 @@ ztos-sdk logs -f         <span class="c"># what it prints, on the phone</span></
 })();
 </script>
 <script>
-// The device list's carousel: every phone on devices.ztos.online, read from
-// docs/devices/, one large card at a time, moving on by itself
+// The device list's two carousels: Community Ports (docs/devices/<id>/) and
+// Cross-Ports (docs/devices/cross-ports.json), one large card at a time,
+// moving on by themselves
 (function () {
   var STATUSES = ['working', 'partial', 'broken', 'untested'];
-  var LABEL = { working: 'working', partial: 'partial', broken: 'broken', untested: 'untested' };
   var SITE = 'https://devices.ztos.online/#/';
-  var track = document.getElementById('track'), dots = document.getElementById('dots');
-  var carousel = document.getElementById('carousel');
-  var index = 0, timer = null, slides = [];
   var still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   function esc(t) {
@@ -730,10 +755,12 @@ ztos-sdk logs -f         <span class="c"># what it prints, on the phone</span></
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
     });
   }
-  function slide(d) {
+  function kv(k, v) { return v ? '<span class="kv"><span>' + esc(k) + '</span>' + esc(v) + '</span>' : ''; }
+
+  function community(d) {
     var c = { working: 0, partial: 0, broken: 0, untested: 0 };
     (d.features || []).forEach(function (f) { if (c[f.status] != null) c[f.status]++; });
-    var works = (d.features || []).filter(function (f) { return f.status === 'working'; }).slice(0, 8).map(function (f) { return esc(f.feature); });
+    var works = (d.features || []).filter(function (f) { return f.status === 'working'; }).slice(0, 8).map(function (f) { return f.feature; });
     var spec = {};
     (d.specs || []).forEach(function (r) { spec[r[0]] = r[1]; });
     var a = document.createElement('a');
@@ -742,53 +769,88 @@ ztos-sdk logs -f         <span class="c"># what it prints, on the phone</span></
     a.innerHTML = '<img src="devices/' + esc(d.id) + '/' + esc(d.photo) + '" alt="" loading="lazy">' +
       '<span class="slide-body"><small>' + esc(d.maker) + '</small><b>' + esc(d.name) + '</b>' +
       '<small>' + esc([d.model, d.codename].filter(Boolean).join(' · ')) + '</small>' +
-      '<span class="pills">' + STATUSES.map(function (s) { return c[s] ? '<i class="st ' + s + '">' + c[s] + ' ' + LABEL[s] + '</i>' : ''; }).join('') + '</span>' +
+      '<span class="pills">' + STATUSES.map(function (s) { return c[s] ? '<i class="st ' + s + '">' + c[s] + ' ' + s + '</i>' : ''; }).join('') + '</span>' +
       '<span class="summary">' + esc(d.summary) + '</span>' +
-      (spec.SoC ? '<span class="kv"><span>SoC</span>' + esc(spec.SoC) + '</span>' : '') +
-      (spec.Kernel ? '<span class="kv"><span>Kernel</span>' + esc(spec.Kernel) + '</span>' : '') +
-      '<span class="kv"><span>Maintainer</span>' + esc(d.maintainer) + '</span>' +
-      (works.length ? '<span class="kv"><span>Works</span>' + works.join(', ') + '</span>' : '') +
+      kv('SoC', spec.SoC) + kv('Kernel', spec.Kernel) + kv('Maintainer', d.maintainer) + kv('Works', works.join(', ')) +
       '<span class="more">Install it, and everything that works →</span></span>';
     return a;
   }
-  function go(i, user) {
-    if (!slides.length) return;
-    index = (i + slides.length) % slides.length;
-    track.scrollTo({ left: slides[index].offsetLeft - track.offsetLeft, behavior: still ? 'auto' : 'smooth' });
-    Array.prototype.forEach.call(dots.children, function (d, n) { d.setAttribute('aria-current', String(n === index)); });
-    if (user) restart();
+  function cross(x) {
+    var a = document.createElement('a');
+    a.className = 'slide text';
+    a.href = SITE + 'cross/' + encodeURIComponent(x.codename);
+    a.innerHTML = '<span class="slide-mark"><span>' + esc(x.manufacturer) + '</span><b>' + esc(x.name) + '</b></span>' +
+      '<span class="slide-body"><small>' + esc(x.manufacturer) + '</small><b>' + esc(x.name) + '</b>' +
+      '<small>' + esc([x.codename, x.year].filter(Boolean).join(' · ')) + '</small>' +
+      '<span class="pills">' + (x.accelerated ? '<i class="st working">GPU: ' + esc(x.gpu_driver) + '</i>' : '<i class="st broken">No GPU driver</i>') +
+      (x.archived ? '<i class="st partial">Archived by postmarketOS</i>' : '<i class="st untested">postmarketOS ' + esc(x.category) + '</i>') + '</span>' +
+      '<span class="summary">postmarketOS boots this phone on mainline Linux; ztConflo puts the ztOS system image on that kernel. Experimental: nobody may have tried ztOS on it yet.</span>' +
+      kv('SoC', x.soc) + kv('Kernel', x.kernel) + kv('Screen', x.screen) + kv('Flashed with', x.flash_method) +
+      '<span class="more">How to build and flash it →</span></span>';
+    return a;
   }
-  function restart() {
-    clearInterval(timer);
-    if (!still && slides.length > 1) timer = setInterval(function () { go(index + 1); }, 6000);
-  }
-  document.getElementById('prev').addEventListener('click', function () { go(index - 1, true); });
-  document.getElementById('next').addEventListener('click', function () { go(index + 1, true); });
-  carousel.addEventListener('mouseenter', function () { clearInterval(timer); });
-  carousel.addEventListener('mouseleave', restart);
-  carousel.addEventListener('focusin', function () { clearInterval(timer); });
-  carousel.addEventListener('focusout', restart);
 
-  fetch('devices/index.json', { cache: 'no-cache' }).then(function (r) { return r.json(); }).then(function (list) {
-    return Promise.all(list.devices.map(function (id) {
-      return fetch('devices/' + id + '/device.json', { cache: 'no-cache' }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; });
-    }));
-  }).then(function (list) {
+  function carousel(root, items, make, empty) {
+    var track = root.querySelector('.track'), dots = root.querySelector('.dots');
+    var index = 0, timer = null, slides = [];
     track.innerHTML = '';
-    list.filter(Boolean).forEach(function (d, n) {
-      var el = slide(d);
+    items.forEach(function (d, n) {
+      var el = make(d);
       track.appendChild(el); slides.push(el);
       var dot = document.createElement('button');
       dot.type = 'button'; dot.setAttribute('aria-label', d.name);
       dot.addEventListener('click', function () { go(n, true); });
       dots.appendChild(dot);
     });
-    if (!slides.length) track.innerHTML = '<p class="mute" style="padding:1.25rem">No phones are listed yet. <a href="https://devices.ztos.online/#/add">Add yours</a>.</p>';
-    carousel.classList.toggle('single', slides.length < 2);
+    if (!slides.length) track.innerHTML = '<p class="mute" style="padding:1.25rem">' + empty + '</p>';
+    root.classList.toggle('single', slides.length < 2);
+    // many phones: the dots would be a wall, so show where we are instead
+    root.classList.toggle('many', slides.length > 12);
+    var where = document.createElement('span');
+    where.className = 'where';
+    dots.appendChild(where);
+    function go(i, user) {
+      if (!slides.length) return;
+      index = (i + slides.length) % slides.length;
+      track.scrollTo({ left: slides[index].offsetLeft - track.offsetLeft, behavior: still ? 'auto' : 'smooth' });
+      Array.prototype.forEach.call(dots.querySelectorAll('button'), function (d, n) { d.setAttribute('aria-current', String(n === index)); });
+      where.textContent = (index + 1) + ' of ' + slides.length;
+      if (user) restart();
+    }
+    function restart() {
+      clearInterval(timer);
+      if (!still && slides.length > 1) timer = setInterval(function () { go(index + 1); }, 6000);
+    }
+    root.querySelector('[data-prev]').addEventListener('click', function () { go(index - 1, true); });
+    root.querySelector('[data-next]').addEventListener('click', function () { go(index + 1, true); });
+    root.addEventListener('mouseenter', function () { clearInterval(timer); });
+    root.addEventListener('mouseleave', restart);
+    root.addEventListener('focusin', function () { clearInterval(timer); });
+    root.addEventListener('focusout', restart);
     go(0); restart();
-  }).catch(function () {
-    track.innerHTML = '<p class="mute" style="padding:1.25rem">The phones didn\'t load. <a href="https://devices.ztos.online">See them on devices.ztos.online</a>.</p>';
-  });
+  }
+
+  var one = document.querySelector('[data-carousel="community"]');
+  var two = document.querySelector('[data-carousel="cross"]');
+  function failed(root) {
+    root.querySelector('.track').innerHTML = '<p class="mute" style="padding:1.25rem">The phones didn\'t load. <a href="https://devices.ztos.online">See them on devices.ztos.online</a>.</p>';
+  }
+
+  fetch('devices/index.json', { cache: 'no-cache' }).then(function (r) { return r.json(); }).then(function (list) {
+    return Promise.all(list.devices.map(function (id) {
+      return fetch('devices/' + id + '/device.json', { cache: 'no-cache' }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; });
+    }));
+  }).then(function (list) {
+    carousel(one, list.filter(Boolean), community, 'No phones are listed yet. <a href="https://devices.ztos.online/#/add">Add yours</a>.');
+  }).catch(function () { failed(one); });
+
+  // the GPU-accelerated, maintained ones first, in a fresh order each visit
+  fetch('devices/cross-ports.json', { cache: 'no-cache' }).then(function (r) { return r.json(); }).then(function (x) {
+    var list = (x.devices || []).slice();
+    for (var i = list.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = list[i]; list[i] = list[j]; list[j] = t; }
+    list.sort(function (a, b) { return (b.accelerated - a.accelerated) || (a.archived - b.archived); });
+    carousel(two, list, cross, 'No cross-ports today.');
+  }).catch(function () { failed(two); });
 })();
 </script>
 </body>
