@@ -355,7 +355,7 @@
         <p class="crumb">Zerone Laboratories / operating systems</p>
         <h1>ztOS</h1>
         <p class="lead">A phone operating system with Windows Phone 8.1's look and motion, on Arch Linux ARM and mainline Linux.</p>
-        <p>ztOS is the ztMETRO shell, its own apps, an updater and an SDK for apps in Python and Qt, on an ordinary Arch Linux ARM system. It runs on the phones in the <a href="#devices">device list</a>, starting with the Samsung Galaxy S9, and in the QEMU emulator. Everything that moves is drawn by the GPU.</p>
+        <p>ztOS is the ztMETRO shell, its own apps, an updater and an SDK for apps in Python and Qt, on an ordinary Arch Linux ARM system. It runs on the phones in the <a href="#devices">device list</a> and in the QEMU emulator. Everything that moves is drawn by the GPU.</p>
         <p>It is beta software. Since BETA-1 ztOS is a generic system image (GSI) plus a small layer per phone, the two meeting at ztOSIAL, its hardware interface layer. The S9 port runs a mainline 7.1 kernel with the phone's GPU, display, touch, Wi-Fi, 4G data, sound and sensors working. ztConflo, its image builder, is how it reaches other phones.</p>
         <div class="actions">
           <a class="btn" href="#installing">Install it</a>
@@ -560,7 +560,7 @@ ztconflo build &lt;codename&gt; --gsi build/ztos/gsi/ztos-gsi-0.2.0-aarch64.tar.
         <div class="devices" id="device-grid" aria-live="polite"><p class="mute">Loading the device list…</p></div>
         <div class="actions" style="margin-top:1.25rem">
           <button class="btn" type="button" id="add-device">Add your port</button>
-          <a class="btn ghost" href="https://github.com/Zerone-Laboratories/ztos-device-samsung-starlte">An example device layer</a>
+          <a class="btn ghost" href="https://github.com/Zerone-Laboratories/ztos-ial">The porting guide</a>
         </div>
       </div>
     </div>
@@ -873,6 +873,7 @@ ztconflo build &lt;codename&gt; --gsi build/ztos/gsi/ztos-gsi-0.2.0-aarch64.tar.
   }).then(function (list) {
     grid.innerHTML = '';
     list.filter(Boolean).forEach(function (d) { devices[d.id] = d; grid.appendChild(card(d)); });
+    if (!grid.children.length) grid.innerHTML = '<p class="mute">No phones are listed yet.</p>';
     route();
   }).catch(function () {
     grid.innerHTML = '<p class="mute">The device list didn\'t load. Reload the page to try again.</p>';
