@@ -268,7 +268,16 @@
   /* ztMETRO's logo beside its heading */
   .with-logo { display: flex; align-items: center; gap: 0.6rem; }
   .ztmetro-logo { width: 2.1rem; height: auto; flex: none; fill: currentColor; }
-  .credit { color: var(--mute); font-size: 0.8125rem; margin-top: 0.6rem; }
+  .credit { color: var(--mute); font-size: 0.8125rem; margin: 0.9rem 0 0.4rem; }
+  .profile { display: inline-flex; align-items: center; gap: 0.6rem; padding: 0.4rem 0.8rem 0.4rem 0.4rem; text-decoration: none;
+    border: 1px solid var(--line); background: var(--panel); transition: background-color 120ms linear, color 120ms linear; }
+  .profile:hover { background: var(--ink); color: var(--paper); }
+  .profile .avatar { position: relative; width: 2.5rem; height: 2.5rem; border-radius: 50%; overflow: hidden; flex: none;
+    background: linear-gradient(45deg, #f9ce34, #ee2a7b, #6228d7); display: grid; place-items: center; }
+  .profile .avatar span { color: #fff; font-weight: 500; }
+  .profile .avatar img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .profile b { display: block; font-weight: 500; font-size: 0.9375rem; line-height: 1.2; }
+  .profile small { display: block; font-size: 0.75rem; opacity: 0.7; }
   /* Community Ports: the photo, and under it the name on a white bar */
   .slide-pic { display: flex; flex-direction: column; border-right: 1px solid var(--line); min-width: 0; }
   .slide-pic img { flex: 1; min-height: 0; border-right: 0; }
@@ -469,7 +478,11 @@
       <div>
         <h2 class="with-logo"><svg class="ztmetro-logo" viewBox="0 0 73.65 68.49" role="img" aria-label="The ztMETRO logo"><polygon points="46.47 10.87 0 18.23 0 65.35 46.47 10.87"/><polygon points="73.65 68.49 23.23 61.63 73.64 0 73.65 68.49"/></svg>ztMETRO</h2>
         <p class="sub">The shell, and the only one installed.</p>
-        <p class="credit">Logo by <a href="https://www.instagram.com/x10michi/" rel="noopener">@x10michi</a></p>
+        <p class="credit">Logo by</p>
+        <a class="profile" href="https://www.instagram.com/x10michi/" rel="noopener">
+          <span class="avatar"><img src="credits/x10michi.jpg" alt="" onerror="this.remove()"><span aria-hidden="true">X</span></span>
+          <span><b>@x10michi</b><small>on Instagram</small></span>
+        </a>
       </div>
       <div class="body">
         <p>ztMETRO is a Wayland compositor, built on wlroots, that is also the whole phone interface: Start with its live tiles, the app list and search, the action centre, the app switcher, the lock screen and the on-screen keyboard. Its look and motion are Windows Phone 8.1's, measured frame by frame against screen recordings of real Lumias.</p>
