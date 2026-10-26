@@ -342,9 +342,12 @@ async function accept(env, interaction, who) {
 		const entry = files.find((a) => a.filename === 'device.json');
 		if (!entry) throw new Error('the post has no device.json');
 		const raw = await (await fetch(entry.url)).json();
+		// the photo the embed shows is moved out of the attachments into the embed
 		const picture = files.find((a) => a.filename === raw.photo);
-		if (!picture) throw new Error(`the post has no ${raw.photo}`);
-		const bytes = new Uint8Array(await (await fetch(picture.url)).arrayBuffer());
+		const embedded = (interaction.message.embeds || []).map((e) => e.image && e.image.url).find(Boolean);
+		const pictureUrl = picture ? picture.url : embedded;
+		if (!pictureUrl) throw new Error(`the post has no ${raw.photo}`);
+		const bytes = new Uint8Array(await (await fetch(pictureUrl)).arrayBuffer());
 		const { device, problems } = normalise(raw, raw.photo);
 		if (problems.length || !/^photo\.(jpg|png|webp)$/.test(raw.photo)) throw new Error(`the entry is incomplete: ${problems.join(', ')}`);
 		await commit(env, device, bytes, `${who.global_name || who.username}`);
