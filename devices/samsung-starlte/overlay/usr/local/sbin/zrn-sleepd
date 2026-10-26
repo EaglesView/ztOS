@@ -55,6 +55,12 @@ MODEM = Path('/run/ztoscorenetworking/status')
 
 SCREEN_OFF_S = 15	# off this long before the first sleep
 MAX_SLEEP_S = 1800	# an RTC alarm at the latest after this
+# Doze: an app picked to run in the background no longer keeps the phone up.
+# It sleeps at most DOZE_SLEEP_S, then stays up DOZE_AWAKE_S with Wi-Fi back,
+# so the app (WhatsApp through microG) can fetch what came in. Calls and SMS
+# still wake it at once through the modem.
+DOZE_SLEEP_S = 300
+DOZE_AWAKE_S = 30
 AWAKE_AFTER = {'rtc': 3, 'modem': 15, 'bt': 5, 'key': 0, 'other': 8}
 # EINT_WAKEUP_MASK (PMU 0x60c, bit = 8 x gpaN + pin, 0 = may wake): open
 # 1 PMIC (gpa0-1), 14 MAX77705 charger (gpa1-6), 19 BT HOST_WAKE (gpa2-3),
@@ -288,8 +294,6 @@ def why_awake():
 		return 'switched off'
 	if not screen_off():
 		return 'screen on'
-	if background_apps_active():
-		return 'background apps'
 	if plugged():
 		return 'charger'
 	if kv(MODEM).get('call', 'idle') not in ('', 'idle'):
@@ -353,8 +357,8 @@ def wake_reason(before):
 
 def cycle():
 	"""One sleep and the way back. Returns why it woke."""
-	if background_apps_active(fresh=True):
-		return 'background apps', 0
+	dozing = background_apps_active(fresh=True)
+	alarm_s = min(MAX_SLEEP_S, DOZE_SLEEP_S) if dozing else MAX_SLEEP_S
 	user_env = ['env', 'XDG_RUNTIME_DIR=' + ztos_user.RUNTIME_DIR]
 	user = ztos_user.USER
 	entries = int(read(SLEEP / 'entries', '0') or 0)
@@ -392,7 +396,7 @@ def cycle():
 			write('/sys/power/mem_sleep', 'deep')
 			step('rtc alarm')
 			write('/sys/class/rtc/rtc0/wakealarm', 0)
-			write('/sys/class/rtc/rtc0/wakealarm', f'+{MAX_SLEEP_S}')
+			write('/sys/class/rtc/rtc0/wakealarm', f'+{alarm_s}')
 			step('dry_run 0')
 			write(SLEEP / 'dry_run', 0)
 			step('mark and sync')
@@ -413,14 +417,11 @@ def cycle():
 			# give it its idle threshold (600 ms) and some to go quiet.
 			step('settle')
 			time.sleep(3)
-			if background_apps_active(fresh=True):
-				reason = 'background apps'
-			else:
-				step('wakeup_count')
-				write('/sys/power/wakeup_count', read('/sys/power/wakeup_count'))
-				signal.alarm(0)		# the sleep itself may last MAX_SLEEP_S
-				step('suspend')
-				write('/sys/power/state', 'mem')
+			step('wakeup_count')
+			write('/sys/power/wakeup_count', read('/sys/power/wakeup_count'))
+			signal.alarm(0)		# the sleep itself may last MAX_SLEEP_S
+			step('suspend')
+			write('/sys/power/state', 'mem')
 		except OSError as e:
 			log('sleep refused:', e.strerror)
 		except Stalled:
@@ -430,7 +431,7 @@ def cycle():
 			signal.alarm(0)
 			signal.signal(signal.SIGALRM, old_alarm)
 			step('restoring')
-		if reason not in ('background apps', 'stalled'):
+		if reason != 'stalled':
 			reason, stat = wake_reason(entries)
 	finally:
 		restored = True
@@ -460,7 +461,12 @@ def cycle():
 			ENABLED.unlink(missing_ok=True)
 			reason = 'failed'
 			tell_shell('notify Power|Sleep switched off|Device recovery failed after sleep.')
+	global last_dozing
+	last_dozing = dozing
 	return reason, stat
+
+
+last_dozing = False
 
 
 # ---- the loop --------------------------------------------------------------------
@@ -506,6 +512,8 @@ def main():
 				backoff = time.monotonic() + min(300, 30 * 2 ** min(4, sleeps % 5))
 			else:
 				backoff = time.monotonic() + AWAKE_AFTER.get(reason, 8)
+				if last_dozing and reason == 'rtc':
+					backoff = time.monotonic() + DOZE_AWAKE_S
 			if reason == 'key':
 				# gpio-keys may hand the shell the press itself, which toggles
 				# the screen: only light it if that did not
@@ -531,9 +539,6 @@ if __name__ == '__main__':
 		print('enabled' if ENABLED.exists() else 'disabled')
 	elif cmd == 'once':
 		# zrn-sleepd once [SECONDS]: one sleep now, an RTC alarm after SECONDS
-		if background_apps_active():
-			log('once: sleep inhibited by background apps')
-			sys.exit(1)
 		STATE.mkdir(parents=True, exist_ok=True)
 		if len(sys.argv) > 2:
 			MAX_SLEEP_S = int(sys.argv[2])
