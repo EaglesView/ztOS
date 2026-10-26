@@ -8584,6 +8584,12 @@ static void screen_set(struct zt_server *server, bool on) {
 	if (!server->output || server->screen_on == on) {
 		return;
 	}
+	/* nested, a disabled output is the window gone, with nothing left to
+	 * wake it; and the Waydroid freeze below is not this machine's */
+	if (!on && g_nested) {
+		wlr_log(WLR_INFO, "nested: the screen stays on");
+		return;
+	}
 	if (!on && server->auth_active) auth_finish(server);
 	if (!on && lad.on && lad.pending >= 0) {
 		char text[16];
