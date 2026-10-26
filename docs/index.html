@@ -265,6 +265,10 @@
   .slide:hover .more { text-decoration: underline; text-underline-offset: 0.2em; }
   .carousel-nav { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.6rem 0.75rem; border-top: 1px solid var(--line); }
   .carousel.single .carousel-nav { display: none; }
+  /* ztMETRO's logo beside its heading */
+  .with-logo { display: flex; align-items: center; gap: 0.6rem; }
+  .ztmetro-logo { width: 2.1rem; height: auto; flex: none; fill: currentColor; }
+  .credit { color: var(--mute); font-size: 0.8125rem; margin-top: 0.6rem; }
   /* Community Ports: the photo, and under it the name on a white bar */
   .slide-pic { display: flex; flex-direction: column; border-right: 1px solid var(--line); min-width: 0; }
   .slide-pic img { flex: 1; min-height: 0; border-right: 0; }
@@ -462,7 +466,11 @@
 
   <section class="section" id="ztmetro">
     <div class="wrap">
-      <div><h2>ztMETRO</h2><p class="sub">The shell, and the only one installed.</p></div>
+      <div>
+        <h2 class="with-logo"><svg class="ztmetro-logo" viewBox="0 0 73.65 68.49" role="img" aria-label="The ztMETRO logo"><polygon points="46.47 10.87 0 18.23 0 65.35 46.47 10.87"/><polygon points="73.65 68.49 23.23 61.63 73.64 0 73.65 68.49"/></svg>ztMETRO</h2>
+        <p class="sub">The shell, and the only one installed.</p>
+        <p class="credit">Logo by <a href="https://www.instagram.com/x10michi/" rel="noopener">@x10michi</a></p>
+      </div>
       <div class="body">
         <p>ztMETRO is a Wayland compositor, built on wlroots, that is also the whole phone interface: Start with its live tiles, the app list and search, the action centre, the app switcher, the lock screen and the on-screen keyboard. Its look and motion are Windows Phone 8.1's, measured frame by frame against screen recordings of real Lumias.</p>
         <p>It renders itself with OpenGL ES: every tile, bar and app surface is a textured quad with its own matrix, which is what lets tiles tilt under a finger and whole screens swing. Text is drawn once and kept as a texture, and frames are drawn only while something moves.</p>
