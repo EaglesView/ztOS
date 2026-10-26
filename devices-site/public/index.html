@@ -48,13 +48,8 @@
   .wrap { max-width: 1200px; margin: 0 auto; padding: 0 clamp(1rem, 4vw, 2.5rem); }
   .mute { color: var(--mute); }
 
-  header.top { border-bottom: 1px solid var(--line); }
-  header.top .wrap { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; padding-top: 1rem; padding-bottom: 1rem; }
   .wordmark { font-weight: 400; font-stretch: 90%; font-size: 1.5rem; letter-spacing: -0.02em; text-decoration: none; }
   .wordmark span { color: var(--mute); }
-  header.top .grow { flex: 1; }
-  header.top input { font: inherit; font-size: 0.9375rem; width: min(320px, 100%); color: var(--ink); background: var(--panel);
-    border: 1px solid var(--line); padding: 0.5rem 0.7rem; }
 
   .btn { font: inherit; font-weight: 400; font-size: 1rem; display: inline-block; cursor: pointer; text-decoration: none; line-height: 1.2;
     padding: 0.7rem 1.15rem; background: var(--ink); color: var(--paper); border: 1px solid var(--line);
@@ -173,6 +168,38 @@
     .row.spec, .row.feature, .row.note { grid-template-columns: 1fr; border-bottom: 1px solid var(--faint); padding-bottom: 0.6rem; }
   }
 
+  /* Layout and sidebar (as on ztos.online) */
+  .layout { display: grid; grid-template-columns: 260px minmax(0, 1fr); align-items: start; }
+  .content { min-width: 0; }
+  .sidebar { position: sticky; top: 0; height: 100dvh; display: flex; flex-direction: column; padding: 1.5rem 1.25rem;
+    border-right: 1px solid var(--line); overflow-y: auto; }
+  .side-top { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 0.25rem; }
+  .side-title { font-size: 0.9375rem; color: var(--mute); margin: 0 0 1.25rem; }
+  .sidebar .menu-btn { display: none; }
+  .side-nav { display: flex; flex-direction: column; flex: 1; }
+  .side-nav input { font: inherit; font-size: 0.9375rem; width: 100%; color: var(--ink); background: var(--panel);
+    border: 1px solid var(--line); padding: 0.5rem 0.7rem; margin-bottom: 1rem; }
+  .side-nav ul { list-style: none; margin: 0; padding: 0; }
+  .side-nav a { display: flex; justify-content: space-between; gap: 0.5rem; text-decoration: none; padding: 0.35rem 0.75rem;
+    transition: background-color 120ms linear, color 120ms linear; }
+  .side-nav a small { color: var(--mute); font-size: 0.8125rem; }
+  .side-nav a:hover, .side-nav a[aria-current="true"] { background: var(--ink); color: var(--paper); }
+  .side-nav a:hover small, .side-nav a[aria-current="true"] small { color: var(--paper); }
+  .side-nav .group { margin-top: 1rem; padding: 0 0.75rem 0.3rem; font-size: 0.8125rem; color: var(--mute); text-transform: uppercase; letter-spacing: 0.06em; }
+  .side-nav .sub-nav { margin: 0.15rem 0 0.4rem 0.75rem; border-left: 1px solid var(--line); }
+  .side-nav .sub-nav a { font-size: 0.9375rem; padding: 0.25rem 0.75rem; color: var(--mute); }
+  .side-nav .sub-nav .sub-nav a { font-size: 0.875rem; }
+  .side-nav .sub-nav a:hover, .side-nav .sub-nav a[aria-current="true"] { color: var(--paper); }
+  .side-foot { margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid var(--line); font-size: 0.9375rem; display: flex; flex-direction: column; gap: 0.6rem; align-items: flex-start; }
+  .side-foot a { color: var(--mute); }
+  @media (max-width: 860px) {
+    .layout { grid-template-columns: 1fr; }
+    .sidebar { position: static; height: auto; border-right: 0; border-bottom: 1px solid var(--line); padding: 1rem clamp(1rem, 4vw, 2.5rem); overflow: visible; }
+    .side-title { margin-bottom: 0; }
+    .sidebar .menu-btn { display: inline-block; }
+    .side-nav { display: none; margin-top: 1rem; }
+    .side-nav.open { display: flex; }
+  }
   footer { border-top: 1px solid var(--line); margin-top: 2rem; }
   footer .wrap { padding-top: 1.5rem; padding-bottom: 2rem; font-size: 0.9375rem; color: var(--mute); display: flex; gap: 1.5rem; flex-wrap: wrap; }
   @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
@@ -180,26 +207,34 @@
 </head>
 <body>
 
-<header class="top">
-  <div class="wrap">
+<div class="layout">
+<aside class="sidebar">
+  <div class="side-top">
     <a class="wordmark" href="https://ztos.online">ztOS <span>wiki</span></a>
-    <a href="#/" style="text-decoration:none"><b>Supported Devices</b></a>
-    <span class="grow"></span>
+    <button class="btn ghost small menu-btn" id="menu" type="button" aria-expanded="false" aria-controls="side-nav">Menu</button>
+  </div>
+  <p class="side-title">Supported Devices</p>
+  <nav class="side-nav" id="side-nav" aria-label="Devices">
     <label for="q" class="hp">Search devices</label>
     <input type="search" id="q" placeholder="Search a phone, maker or codename" autocomplete="off">
-    <a class="btn small" href="#/add">Add your port</a>
-    <button class="btn ghost small" id="theme" type="button" aria-pressed="false">Dark mode</button>
-  </div>
-</header>
+    <ul id="nav"><li><a href="#/">All devices</a></li></ul>
+    <div class="side-foot">
+      <button class="btn ghost small" id="theme" type="button" aria-pressed="false">Dark mode</button>
+      <a href="https://ztos.online/#installing">How installing works</a>
+      <a href="https://github.com/Zerone-Laboratories/ztos-ial">Porting guide</a>
+      <a href="https://ztos.online">ztos.online</a>
+    </div>
+  </nav>
+</aside>
 
+<div class="content">
 <main id="view" class="wrap"><p class="empty">Loading the devices…</p></main>
 
 <footer><div class="wrap">
-  <a href="https://ztos.online">ztos.online</a>
-  <a href="https://ztos.online/#installing">How installing works</a>
-  <a href="https://github.com/Zerone-Laboratories/ztos-ial">Porting guide</a>
   <span>Entries are written by each phone's maintainer and checked by the ztOS Mobile moderators.</span>
 </div></footer>
+</div>
+</div>
 
 <script>
 (function () {
@@ -270,7 +305,7 @@
   function photo(d) { return DATA + encodeURIComponent(d.id) + '/' + encodeURIComponent(d.photo); }
 
   // ---- the list, by maker ----
-  function list() {
+  function list(maker) {
     document.title = 'ztOS Supported Devices';
     var words = q.value.toLowerCase().split(/\s+/).filter(Boolean);
     var shown = devices.filter(function (d) {
@@ -278,7 +313,7 @@
       return words.every(function (w) { return t.indexOf(w) !== -1; });
     });
     var makers = {};
-    shown.forEach(function (d) { (makers[d.maker] = makers[d.maker] || []).push(d); });
+    shown.forEach(function (d) { if (!maker || slug(d.maker) === maker) (makers[d.maker] = makers[d.maker] || []).push(d); });
     var h = '<section class="hero"><h1>Supported Devices</h1>' +
       '<p>Every phone ztOS runs on, by maker. Open one for what works on it and its step-by-step installation guide. Ported a phone that isn\'t here? <a href="#/add">Add it</a>: moderators check every entry first.</p>' +
       '<div class="legend">' + STATUSES.map(function (s) { return '<span><i class="st ' + s + '">' + LABEL[s] + '</i></span>'; }).join('') + '</div></section>';
@@ -507,17 +542,56 @@
       .then(function () { btn.disabled = false; btn.textContent = 'Send for review'; });
   }
 
-  // ---- routing: #/ the list, #/<id>[/<tab>] a phone, #/add the form ----
+  // ---- the left pane: all devices, then each maker with its phones; the
+  // phone open now shows its sections ----
+  var nav = document.getElementById('nav');
+  var sideNav = document.getElementById('side-nav'), menu = document.getElementById('menu');
+  menu.addEventListener('click', function () {
+    var open = sideNav.classList.toggle('open');
+    menu.setAttribute('aria-expanded', String(open)); menu.textContent = open ? 'Close' : 'Menu';
+  });
+  sideNav.addEventListener('click', function (e) {
+    if (e.target.closest('a') && sideNav.classList.contains('open')) {
+      sideNav.classList.remove('open'); menu.setAttribute('aria-expanded', 'false'); menu.textContent = 'Menu';
+    }
+  });
+  function slug(t) { return String(t).toLowerCase().replace(/[^a-z0-9]+/g, '-'); }
+  function renderNav(parts) {
+    var makers = {};
+    devices.forEach(function (d) { (makers[d.maker] = makers[d.maker] || []).push(d); });
+    var here = parts[0] || '';
+    var h = '<li><a href="#/"' + (!here ? ' aria-current="true"' : '') + '>All devices<small>' + devices.length + '</small></a></li>' +
+      '<li class="group">Makers</li>';
+    Object.keys(makers).sort(function (a, b) { return a.localeCompare(b); }).forEach(function (m) {
+      var ds = makers[m].sort(function (a, b) { return a.name.localeCompare(b.name); });
+      h += '<li><a href="#/maker/' + esc(slug(m)) + '"' + (here === 'maker' && parts[1] === slug(m) ? ' aria-current="true"' : '') + '>' + esc(m) + '<small>' + ds.length + '</small></a><ul class="sub-nav">' +
+        ds.map(function (d) {
+          var open = here === d.id;
+          return '<li><a href="#/' + esc(d.id) + '"' + (open && !parts[1] ? ' aria-current="true"' : '') + '>' + esc(d.name.indexOf(m + ' ') === 0 ? d.name.slice(m.length + 1) : d.name) + '</a>' +
+            (open ? '<ul class="sub-nav">' + [['install', 'Installation'], ['works', 'What works'], ['quirks', 'Known quirks']].map(function (t) {
+              return '<li><a href="#/' + esc(d.id) + '/' + t[0] + '"' + ((parts[1] || 'install') === t[0] && parts[1] ? ' aria-current="true"' : '') + '>' + t[1] + '</a></li>';
+            }).join('') + '</ul>' : '') + '</li>';
+        }).join('') + '</ul></li>';
+    });
+    h += '<li class="group">Contribute</li><li><a href="#/add"' + (here === 'add' ? ' aria-current="true"' : '') + '>Add your port</a></li>';
+    nav.innerHTML = h;
+  }
+
+  // ---- routing: #/ the list, #/maker/<maker> one maker, #/<id>[/<tab>] a
+  // phone, #/add the form ----
   function route() {
     var parts = location.hash.replace(/^#\/?/, '').split('/').filter(Boolean);
     window.scrollTo(0, 0);
+    renderNav(parts);
     if (parts[0] === 'add') return add();
+    if (parts[0] === 'maker') return list(parts[1]);
     var d = devices.filter(function (x) { return x.id === parts[0]; })[0];
     if (d) return device(d, ['install', 'works', 'quirks'].indexOf(parts[1]) >= 0 ? parts[1] : 'install');
     list();
   }
   window.addEventListener('hashchange', route);
   q.addEventListener('input', function () { if (location.hash.replace(/^#\/?/, '')) location.hash = '#/'; else list(); });
+  q.addEventListener('keydown', function (e) { if (e.key === 'Enter' && sideNav.classList.contains('open')) menu.click(); });
 
   fetch(DATA + 'index.json', { cache: 'no-cache' }).then(function (r) { return r.json(); }).then(function (index) {
     return Promise.all(index.devices.map(function (id) {
