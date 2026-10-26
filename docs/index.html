@@ -3,8 +3,27 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>ztOS wiki</title>
-<meta name="description" content="ztOS is a phone operating system with Windows Phone 8.1's look and motion, on Arch Linux ARM and mainline Linux, running on the Galaxy S9.">
+<title>ztOS: a Windows Phone-style Linux phone OS (ztMETRO shell)</title>
+<meta name="description" content="ztOS is an open-source phone operating system with Windows Phone 8.1's look and motion (the ztMETRO shell), on Arch Linux ARM and mainline Linux. Runs on the Galaxy S9, in QEMU, and on phones postmarketOS supports, with Android apps through Waydroid.">
+<link rel="canonical" href="https://ztos.online/">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="theme-color" content="#121212">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ztOS">
+<meta property="og:title" content="ztOS: Windows Phone 8.1's look and motion, on Linux">
+<meta property="og:description" content="ztOS is an open-source phone operating system with Windows Phone 8.1's look and motion (the ztMETRO shell), on Arch Linux ARM and mainline Linux. Runs on the Galaxy S9, in QEMU, and on phones postmarketOS supports, with Android apps through Waydroid.">
+<meta property="og:url" content="https://ztos.online/">
+<meta property="og:image" content="https://ztos.online/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="ztOS's Start screen on a Galaxy S9">
+<meta property="og:locale" content="en_AU">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="ztOS: Windows Phone 8.1's look and motion, on Linux">
+<meta name="twitter:description" content="ztOS is an open-source phone operating system with Windows Phone 8.1's look and motion (the ztMETRO shell), on Arch Linux ARM and mainline Linux. Runs on the Galaxy S9, in QEMU, and on phones postmarketOS supports, with Android apps through Waydroid.">
+<meta name="twitter:image" content="https://ztos.online/og.jpg">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","@id":"https://ztos.online/#website","url":"https://ztos.online/","name":"ztOS","inLanguage":"en-AU","publisher":{"@id":"https://ztos.online/#org"}},{"@type":"Organization","@id":"https://ztos.online/#org","name":"Zerone Laboratories","url":"https://ztos.online/","logo":"https://ztos.online/favicon.svg","sameAs":["https://github.com/Zerone-Laboratories"]},{"@type":"SoftwareApplication","name":"ztOS","applicationCategory":"OperatingSystem","operatingSystem":"Linux (aarch64)","softwareVersion":"0.2.0 BETA-1","description":"ztOS is an open-source phone operating system with Windows Phone 8.1's look and motion (the ztMETRO shell), on Arch Linux ARM and mainline Linux. Runs on the Galaxy S9, in QEMU, and on phones postmarketOS supports, with Android apps through Waydroid.","url":"https://ztos.online/","image":"https://ztos.online/og.jpg","license":"https://www.gnu.org/licenses/gpl-3.0.html","downloadUrl":"https://github.com/Zerone-Laboratories/ztOS","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"author":{"@id":"https://ztos.online/#org"}}]}</script>
 <meta name="ztos-submit" content="https://ztos-device-submit.ztos.workers.dev/submit">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -434,7 +453,7 @@
           <li><div><b>Try it first</b><span><code>python -m ztconflo build &lt;codename&gt; --gsi &lt;path to the GSI&gt; --dry-run</code> checks the phone's kernel against what ztOS needs and shows every command, without running them.</span></div></li>
           <li><div><b>Build and flash</b><span>The same without <code>--dry-run</code> writes <code>out/&lt;codename&gt;/</code>; <code>python -m ztconflo flash &lt;codename&gt;</code> shows the partitions and asks before writing.</span></div></li>
           <li><div><b>See what works</b><span>On the phone, <code>ztos-ial status</code> and <code>ztos-ial test</code>. The <a href="https://github.com/Zerone-Laboratories/ztos-ial">ztOSIAL porting guide</a> shows how to fix what doesn't.</span></div></li>
-          <li><div><b>Share it</b><span><a href="https://devices.ztos.online/#/add">Add it to the device list</a> with its photo, steps and what works, so others can install it too.</span></div></li>
+          <li><div><b>Share it</b><span><a href="https://devices.ztos.online/add">Add it to the device list</a> with its photo, steps and what works, so others can install it too.</span></div></li>
         </ol>
 
         <h3 id="install-help">If something goes wrong</h3>
@@ -608,8 +627,8 @@ ztos-sdk logs -f         <span class="c"># what it prints, on the phone</span></
           </div>
         </div>
         <div class="actions" style="margin-top:1rem">
-          <a class="btn" href="https://devices.ztos.online/#/community">Go to devices →</a>
-          <a class="btn ghost" href="https://devices.ztos.online/#/add">Add your port</a>
+          <a class="btn" href="https://devices.ztos.online/community">Go to devices →</a>
+          <a class="btn ghost" href="https://devices.ztos.online/add">Add your port</a>
         </div>
 
         <h3 id="cross-ports">Cross-Ports <span class="exp">EXPERIMENTAL</span></h3>
@@ -623,7 +642,7 @@ ztos-sdk logs -f         <span class="c"># what it prints, on the phone</span></
           </div>
         </div>
         <div class="actions" style="margin-top:1rem">
-          <a class="btn" href="https://devices.ztos.online/#/cross">Go to cross-ports →</a>
+          <a class="btn" href="https://devices.ztos.online/cross">Go to cross-ports →</a>
         </div>
       </div>
     </div>
@@ -776,7 +795,7 @@ ztos-sdk logs -f         <span class="c"># what it prints, on the phone</span></
 // moving on by themselves
 (function () {
   var STATUSES = ['working', 'partial', 'broken', 'untested'];
-  var SITE = 'https://devices.ztos.online/#/';
+  var SITE = 'https://devices.ztos.online/';
   var still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   function esc(t) {
@@ -871,7 +890,7 @@ ztos-sdk logs -f         <span class="c"># what it prints, on the phone</span></
       return fetch('devices/' + id + '/device.json', { cache: 'no-cache' }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; });
     }));
   }).then(function (list) {
-    carousel(one, list.filter(Boolean), community, 'No phones are listed yet. <a href="https://devices.ztos.online/#/add">Add yours</a>.');
+    carousel(one, list.filter(Boolean), community, 'No phones are listed yet. <a href="https://devices.ztos.online/add">Add yours</a>.');
   }).catch(function () { failed(one); });
 
   // the GPU-accelerated, maintained ones first, in a fresh order each visit
