@@ -102,7 +102,7 @@ def preview(out):
 
 
 def git(out):
-    if subprocess.run(['git', '-C', str(ROOT), 'status', '--porcelain'], capture_output=True, text=True).stdout.strip():
+    if subprocess.run(['git', '-C', str(ROOT), 'status', '--porcelain', '--ignore-submodules=dirty'], capture_output=True, text=True).stdout.strip():
         sys.exit('ztOSMobile has uncommitted changes: commit them first, the split takes history')
     if not shutil.which('git-filter-repo'):
         sys.exit('needs git-filter-repo (pacman -S git-filter-repo)')
