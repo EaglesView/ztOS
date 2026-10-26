@@ -65,6 +65,12 @@
 #include <pango/pangocairo.h>
 #include <wayland-server-core.h>
 #include <wlr/backend.h>
+#include <wlr/backend/multi.h>
+#include <wlr/backend/wayland.h>
+#include <wlr/config.h>
+#if WLR_HAS_X11_BACKEND
+#include <wlr/backend/x11.h>
+#endif
 #include <wlr/interfaces/wlr_keyboard.h>
 #include <wlr/render/allocator.h>
 #include <wlr/render/egl.h>
@@ -800,9 +806,24 @@ static void auth_finish(struct zt_server *);
 static void draw_dialog(struct zt_server *);
 static void run_detached(const char *, const char *, const char *, const char *);
 
-/* When testing the shell on x86, we need to toggle this
- * so the shell knows not to wait for device-specific features. */
+/* In a window on another desktop (scripts/dev/run-nested.sh, any machine),
+ * not on a phone's own screen: the machine's backlight, radios, volume and
+ * power are not the shell's to change, and there is no sensor hub or Waydroid
+ * to wait for at boot. Asked for with ZTMETRO_NESTED=1, and only taken when
+ * wlroots did open a window (see main). */
 static bool g_nested;
+
+static void backend_is_window(struct wlr_backend *backend, void *data) {
+	bool *window = data;
+	if (wlr_backend_is_wl(backend)) {
+		*window = true;
+	}
+#if WLR_HAS_X11_BACKEND
+	if (wlr_backend_is_x11(backend)) {
+		*window = true;
+	}
+#endif
+}
 
 static uint32_t now_ms(void) {
 	struct timespec ts;
@@ -11096,7 +11117,7 @@ static void server_new_output(struct wl_listener *listener, void *data) {
 		 * from, so a phone's shape, ZTMETRO_SIZE=WxH in pixels */
 		int w = 540, h = 1110;
 		const char *size = getenv("ZTMETRO_SIZE");
-		if (size && sscanf(size, "%dx%d", &w, &h) != 2) {
+		if (size && (sscanf(size, "%dx%d", &w, &h) != 2 || w <= 0 || h <= 0)) {
 			w = 540, h = 1110;
 		}
 		wlr_output_state_set_custom_mode(&state, w, h, 0);
@@ -11437,22 +11458,40 @@ int main(int argc, char *argv[]) {
 	 * Linear it is a plain copy, and the GPU barely notices on our few quads. */
 	setenv("PAN_MESA_DEBUG", "noafbc,linear", true);
 
-	/* the rule wlr_backend_autocreate picks a window by: a display to join
-	 * means another desktop is already on this machine's screen */
-	g_nested = getenv("WAYLAND_DISPLAY") || getenv("WAYLAND_SOCKET") || getenv("DISPLAY");
-	if (g_nested) {
-		wlr_log(WLR_INFO, "nested: in a window, hardware and system actions off");
-	}
-
 	server.wl_display = wl_display_create();
 	server.loop = wl_display_get_event_loop(server.wl_display);
-	backlight_init(&server);
-	backlight_set(server.shade_brightness);	/* (load_config ran before the loop) */
 	server.backend = wlr_backend_autocreate(server.loop, NULL);
 	if (!server.backend) {
 		wlr_log(WLR_ERROR, "failed to create the backend");
 		return 1;
 	}
+	/* Nested mode is asked for, and checked against what wlroots opened: a
+	 * window without the ask would act on the desktop's own Wi-Fi, volume and
+	 * power, so it does not start; the ask on a screen of its own (a phone) is
+	 * ignored, so the phone keeps its hardware. */
+	bool window = false;
+	if (wlr_backend_is_multi(server.backend)) {
+		wlr_multi_for_each_backend(server.backend, backend_is_window, &window);
+	} else {
+		backend_is_window(server.backend, &window);
+	}
+	const char *nested = getenv("ZTMETRO_NESTED");
+	bool asked = nested && strcmp(nested, "1") == 0;
+	if (window && !asked) {
+		wlr_log(WLR_ERROR, "nested: in a window on another desktop without ZTMETRO_NESTED=1; "
+			"start it with scripts/dev/run-nested.sh");
+		wlr_backend_destroy(server.backend);
+		return 1;
+	}
+	if (asked && !window) {
+		wlr_log(WLR_ERROR, "nested: ZTMETRO_NESTED=1 on a screen of its own, ignored");
+	}
+	g_nested = window;
+	if (g_nested) {
+		wlr_log(WLR_INFO, "nested: in a window, hardware and system actions off");
+	}
+	backlight_init(&server);
+	backlight_set(server.shade_brightness);	/* (load_config ran before the loop) */
 	server.renderer = wlr_renderer_autocreate(server.backend);
 	if (!server.renderer) {
 		wlr_log(WLR_ERROR, "failed to create the renderer");

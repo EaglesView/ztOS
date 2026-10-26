@@ -2,7 +2,8 @@
 # ztMETRO in a window on this machine's desktop (Wayland or X11, any arch), to
 # try the shell without a phone. The mouse is a finger (left button), the
 # keyboard is the keyboard. The machine's backlight, radios, volume and power
-# are left alone (g_nested in ztmetro.c).
+# are left alone (ZTMETRO_NESTED=1, g_nested in ztmetro.c; without it the
+# shell will not start in a window).
 #
 #   scripts/dev/run-nested.sh            build what is missing, then run
 #   ZTMETRO_SIZE=720x1480 ZTMETRO_SCALE=1.25 scripts/dev/run-nested.sh
@@ -16,15 +17,23 @@ b=$root/build
 wlr=$b/wlroots
 nest=$b/nested
 
-if [ ! -d "$wlr" ]; then
+pc=$(find "$wlr" -name 'wlroots-0.20.pc' 2>/dev/null | head -n1)
+if [ -z "$pc" ]; then
 	echo "building wlroots 0.20 into $wlr (once)"
 	[ -d "$b/wlroots-src" ] || git clone -q --depth 1 --branch 0.20.0 \
 		https://gitlab.freedesktop.org/wlroots/wlroots.git "$b/wlroots-src"
+	# from the start each time: a build that stopped half way is not resumed
+	rm -rf "$b/wlroots-build" "$wlr"
 	meson setup "$b/wlroots-build" "$b/wlroots-src" --prefix="$wlr" \
 		-Drenderers=gles2 -Dxwayland=disabled -Dexamples=false
 	ninja -C "$b/wlroots-build" install
+	pc=$(find "$wlr" -name 'wlroots-0.20.pc' | head -n1)
+	if [ -z "$pc" ]; then
+		echo "run-nested: wlroots built, but no wlroots-0.20.pc in $wlr" >&2
+		exit 1
+	fi
 fi
-lib=$(dirname "$(find "$wlr" -name 'wlroots-0.20.pc' | head -n1)")
+lib=$(dirname "$pc")
 export PKG_CONFIG_PATH="$lib${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
 export LD_LIBRARY_PATH="$(dirname "$lib")${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 
@@ -51,4 +60,5 @@ export XDG_CONFIG_HOME="$HOME/.config" XDG_DATA_HOME="$HOME/.local/share"
 export XDG_STATE_HOME="$HOME/.local/state" XDG_CACHE_HOME="$HOME/.cache"
 export PATH="$nest/bin:$PATH"
 export ZTMETRO_SCALE="${ZTMETRO_SCALE:-1}"
+export ZTMETRO_NESTED=1
 exec "$root/ztmetro/ztmetro"
