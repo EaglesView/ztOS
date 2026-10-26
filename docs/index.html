@@ -381,7 +381,7 @@
         <h1>ztOS</h1>
         <p class="lead">A phone operating system with Windows Phone 8.1's look and motion, on Arch Linux ARM and mainline Linux.</p>
         <p>ztOS is the ztMETRO shell, its own apps, an updater and an SDK for apps in Python and Qt, on an ordinary Arch Linux ARM system. It runs on the phones in the <a href="#devices">device list</a> and in the QEMU emulator. Everything that moves is drawn by the GPU.</p>
-        <p>It is beta software. Since BETA-1 ztOS is a generic system image (GSI) plus a small layer per phone, the two meeting at ztOSIAL, its hardware interface layer. The S9 port runs a mainline 7.1 kernel with the phone's GPU, display, touch, Wi-Fi, 4G data, sound and sensors working. ztConflo, its image builder, is how it reaches other phones.</p>
+        <p>It is beta software. Since BETA-1 ztOS is a generic system image (GSI) plus a small layer per phone, the two meeting at ztOSIAL (Zerone Technologies Operating System Interface Abstraction Layer), its hardware interface layer. The S9 port runs a mainline 7.1 kernel with the phone's GPU, display, touch, Wi-Fi, 4G data, sound and sensors working. ztConflo, its image builder, is how it reaches other phones.</p>
         <div class="actions">
           <a class="btn" href="https://devices.ztos.online">View Device List</a>
           <a class="btn ghost" href="#installing">Install it</a>
@@ -585,7 +585,7 @@ ztos-sdk logs -f         <span class="c"># what it prints, on the phone</span></
     <div class="wrap">
       <div><h2>GSI and ztOSIAL</h2><p class="sub">How ztOS is put together since BETA-1.</p></div>
       <div class="body">
-        <p>ztOS is built as one generic system image (GSI) for every aarch64 phone: the shell, the apps, the services and Waydroid, with no kernel, no user and nothing specific to a phone. Each phone adds a device layer: its kernel, firmware, drivers, and a manifest saying how its hardware is reached. The two meet at ztOSIAL, a set of D-Bus interfaces (<code>org.ztos.ial</code>) served by <code>ztos-iald</code>.</p>
+        <p>ztOS is built as one generic system image (GSI) for every aarch64 phone: the shell, the apps, the services and Waydroid, with no kernel, no user and nothing specific to a phone. Each phone adds a device layer: its kernel, firmware, drivers, and a manifest saying how its hardware is reached. The two meet at ztOSIAL, the Zerone Technologies Operating System Interface Abstraction Layer: a set of D-Bus interfaces (<code>org.ztos.ial</code>) served by <code>ztos-iald</code>.</p>
         <dl class="rules">
           <div><dt>Interfaces</dt><dd>13: device, power, performance, display, sleep, sensors, haptics, lights, modem, call audio, audio devices, acceleration and Android.</dd></div>
           <div><dt>Backends</dt><dd>Each interface is served by a generic backend (enough on a phone with full mainline support), the generic one with parameters, a Python backend in the device layer, or a separate service.</dd></div>

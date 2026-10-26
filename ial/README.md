@@ -1,5 +1,7 @@
 # ztOSIAL
 
+**ztOSIAL** is the Zerone Technologies Operating System Interface Abstraction Layer.
+
 The interfaces between the ztOS system image (GSI) and a phone's own hardware.
 Design and reasons: `design/ztOSIAL.md`. Licence: LGPL-2.1-or-later.
 
