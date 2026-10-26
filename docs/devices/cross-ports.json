@@ -1,6 +1,6 @@
 {
- "generated": "2026-10-26T05:01:39+00:00",
- "pmaports": "dfb010f5b9885d185d089b6e1e493030062f9756",
+ "generated": "2026-10-26T05:03:51+00:00",
+ "pmaports": "435205da9604633a7691d3cb9489f3aa89262c82",
  "devices": [
   {
    "codename": "fairphone-fp4",
@@ -175,6 +175,22 @@
    "archived": false,
    "flash_method": "fastboot",
    "kernel": "linux-postmarketos-qcom-msm8953",
+   "screen": "",
+   "warnings": []
+  },
+  {
+   "codename": "ayaneo-pocket-s2",
+   "name": "Ayaneo Pocket S2",
+   "manufacturer": "Ayaneo",
+   "year": "2025",
+   "chassis": "tablet",
+   "category": "testing",
+   "soc": "sm8650",
+   "gpu_driver": "freedreno",
+   "accelerated": true,
+   "archived": false,
+   "flash_method": "fastboot",
+   "kernel": "linux-ayaneo-pocket-s2",
    "screen": "",
    "warnings": []
   },
@@ -544,6 +560,22 @@
    "flash_method": "fastboot",
    "kernel": "linux-postmarketos-qcom-msm8916",
    "screen": "720x1280",
+   "warnings": []
+  },
+  {
+   "codename": "vsmart-zangyapro",
+   "name": "Vsmart Active 1",
+   "manufacturer": "Vsmart",
+   "year": "2018",
+   "chassis": "handset",
+   "category": "testing",
+   "soc": "sdm660",
+   "gpu_driver": "freedreno",
+   "accelerated": true,
+   "archived": false,
+   "flash_method": "fastboot",
+   "kernel": "linux-postmarketos-qcom-sdm660",
+   "screen": "",
    "warnings": []
   },
   {
@@ -1984,6 +2016,24 @@
    "flash_method": "heimdall-bootimg",
    "kernel": "linux-samsung-coreprimevelte",
    "screen": "480x800",
+   "warnings": [
+    "Unable to detect a Graphics Accelerator for the selected device, the Metro Shell will not start or work properly !"
+   ]
+  },
+  {
+   "codename": "ayn-odin-3",
+   "name": "AYN Odin 3",
+   "manufacturer": "AYN",
+   "year": "2025",
+   "chassis": "tablet",
+   "category": "testing",
+   "soc": "cq8725s",
+   "gpu_driver": "",
+   "accelerated": false,
+   "archived": false,
+   "flash_method": "fastboot",
+   "kernel": "linux-ayn-odin-3",
+   "screen": "",
    "warnings": [
     "Unable to detect a Graphics Accelerator for the selected device, the Metro Shell will not start or work properly !"
    ]
