@@ -1,0 +1,63 @@
+{
+  "id": "test-testphone",
+  "name": "TEST entry (please ignore)",
+  "maker": "Test",
+  "model": "T-1",
+  "codename": "testphone",
+  "maintainer": "ztOS bot test",
+  "contact": "https://ztos.online",
+  "added": "2026-10-26",
+  "summary": "A test of the device-list relay. It will be deleted in a minute.",
+  "photo": "photo.jpg",
+  "photo_caption": "",
+  "specs": [
+    [
+      "SoC",
+      "Test 9000"
+    ],
+    [
+      "RAM",
+      "4 GB"
+    ]
+  ],
+  "install": {
+    "warning": "Test only.",
+    "requirements": [
+      "Nothing"
+    ],
+    "steps": [
+      {
+        "title": "Do nothing",
+        "text": "`true`"
+      }
+    ],
+    "after": ""
+  },
+  "features": [
+    {
+      "category": "Display",
+      "feature": "Panel",
+      "status": "working",
+      "notes": ""
+    },
+    {
+      "category": "Modem",
+      "feature": "Calls",
+      "status": "partial",
+      "notes": "no audio"
+    },
+    {
+      "category": "Camera",
+      "feature": "Cameras",
+      "status": "broken",
+      "notes": ""
+    },
+    {
+      "category": "GPS",
+      "feature": "GPS",
+      "status": "untested",
+      "notes": ""
+    }
+  ],
+  "notes": []
+}

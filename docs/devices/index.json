@@ -1,3 +1,6 @@
 {
-  "devices": ["samsung-starlte"]
+  "devices": [
+    "samsung-starlte",
+    "test-testphone"
+  ]
 }
