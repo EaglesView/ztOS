@@ -65,8 +65,8 @@
     {
       "category": "Boot",
       "feature": "Charging while off",
-      "status": "partial",
-      "notes": "Stays in a minimal start until the battery reaches 10%; not yet tried from below 10%"
+      "status": "working",
+      "notes": "Charges in a minimal start and starts ztOS once the battery reaches 10%; tested"
     },
     {
       "category": "Display",
@@ -143,8 +143,8 @@
     {
       "category": "Network",
       "feature": "Bluetooth",
-      "status": "partial",
-      "notes": "The controller comes up and scans; pairing not yet tried"
+      "status": "working",
+      "notes": "Scanning and pairing tested"
     },
     {
       "category": "Network",

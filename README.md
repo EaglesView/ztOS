@@ -93,7 +93,7 @@ notes say what. **Broken**: tried, does not work. **Not started**: nothing yet.
 | Category | Feature | Status | Notes |
 |---|---|---|---|
 | Boot | Booting from internal storage (UFS) | Works | Falls back to TWRP by itself after a crash or watchdog reset |
-| Boot | Charging while off | Partial | Off with a charger in, it stays in a minimal start until the battery reaches 10 %; written, and not yet tried from below 10 % |
+| Boot | Charging while off | Works | Off with a charger in, it stays in a minimal start until the battery reaches 10 %, then starts ztOS; tested |
 | Display | Panel, 1440x2960 | Works | DECON scanout |
 | Display | Brightness | Works | Manual, and automatic from the light sensor |
 | Display | Colour tone | Works | OpenTone in ztoscsf-sensord: the hub's light sensor reports the room's colour temperature, and the screen's white follows it part of the way (5000–6500 K); Settings > display |
@@ -106,7 +106,7 @@ notes say what. **Broken**: tried, does not work. **Not started**: nothing yet.
 | CPU | Suspend / Idle Power-Down | Works | Per-core C2 power-down active on efficiency cores via zrn-cpuidle with MCT hardware broadcast timer; big cores dynamically offlined via zrnperfd with Rapid Boost |
 | Power | Battery and charger | Works | MAX17042 gauge, MAX77705 charger |
 | Network | Wi-Fi | Works | BCM4361; join, forget, details and per-network signal in Settings; PCIe link and Wi-Fi reconnect passed two AP hardware-sleep cycles |
-| Network | Bluetooth | Not started | |
+| Network | Bluetooth | Works | Scanning and pairing tested |
 | Network | Mobile data (4G) | Works | Samsung IPC through ztOSCoreNetworking; access point set in Settings |
 | Network | USB networking to a computer | Works | 172.16.42.1 (the computer gets 172.16.42.2), plus a serial console |
 | Modem | SIM, registration, signal | Works | The modem runs exactly as stock does; EFS (IMEI, calibration) is never altered |
