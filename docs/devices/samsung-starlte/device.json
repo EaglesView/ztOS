@@ -53,40 +53,7 @@
     ]
   ],
   "install": {
-    "warning": "This erases the phone. Android and everything in its storage are replaced. The phone's IMEI and modem calibration (the EFS partitions) are never touched, and the stock Android partitions stay, because the modem needs them.",
-    "requirements": [
-      "A Linux computer (x86-64 or ARM) with about 15 GB free and an internet connection",
-      "The bootloader unlocked (Settings > Developer options > OEM unlocking in Android) and TWRP for starlte flashed to RECOVERY with Odin or Heimdall",
-      "A USB cable, and the phone charged above 50%",
-      "On Arch Linux, the build tools: `sudo pacman -S --needed util-linux libarchive dosfstools mtools e2fsprogs qemu-user-static qemu-user-static-binfmt android-tools`"
-    ],
-    "steps": [
-      {
-        "title": "Back up the phone",
-        "text": "Everything in Android's storage is erased."
-      },
-      {
-        "title": "Start TWRP and connect the phone",
-        "text": "Turn the phone off, then hold Volume Up, Bixby and Power until TWRP appears. Plug it into the computer: `adb devices` shows it as `recovery`."
-      },
-      {
-        "title": "Get ztOS on the computer",
-        "text": "`git clone --recurse-submodules https://github.com/Zerone-Laboratories/ztOS.git`, then `cd ztOS` (in a clone you already have, `git submodule update --init` fetches the S9's kernel tree). `installer/ztos doctor` says whether the computer is ready."
-      },
-      {
-        "title": "Build and install",
-        "text": "`installer/ztos install --target starlte --mode build-install`. It asks for a user name, password, the phone's name and your time zone, then builds the system and the boot image (30 to 60 minutes; the build never needs sudo)."
-      },
-      {
-        "title": "Confirm the writes",
-        "text": "Answer yes to write the boot image to BOOT (it is read back to check it), then type `ERASE` to write the system to USERDATA. It is written in checked 256 MiB pieces: if the cable comes out, run the same command again and it carries on."
-      },
-      {
-        "title": "Restart into ztOS",
-        "text": "Let the installer restart the phone, or hold Power, Volume Up and Volume Down. The first start takes about a minute while the system grows to fill the storage, then the Welcome app shows how ztOS is used. Android apps are set up in the background on the first start (Waydroid downloads its images once)."
-      }
-    ],
-    "after": "If the phone ever fails to start, it goes back to TWRP by itself: start again from step 2. Once a BETA-1 release is published, `--mode download` installs the prebuilt image instead of building it (user `zerone`, password `toor`; change it at once)."
+    "markdown": "> **This erases the phone.** Android and everything in its storage are replaced. The IMEI and modem calibration (EFS) are never touched, and the stock Android partitions stay, because the modem needs them.\n>\n> **Only the Exynos Galaxy S9 works:** SM-G960F or SM-G960N (`starlte`). The US Snapdragon S9 (SM-G960U) does not.\n\n## What you need\n\n- A Linux computer (x86-64 or ARM) with **15 GB free** and an internet connection\n- A USB-C **data** cable (some only charge)\n- The phone charged above **50%**\n- About **2 hours**, mostly waiting\n\n## 1. Install the tools on your computer\n\nArch Linux:\n\n```sh\nsudo pacman -S --needed git util-linux libarchive dosfstools mtools e2fsprogs \\\n    qemu-user-static qemu-user-static-binfmt android-tools heimdall socat\n```\n\nDebian / Ubuntu (not yet tested):\n\n```sh\nsudo apt install git uidmap libarchive-tools dosfstools mtools e2fsprogs \\\n    qemu-user-static binfmt-support adb heimdall-flash socat\n```\n\nThe build runs as you, without `sudo`, so your account needs a range of user IDs. Check:\n\n```sh\ngrep $USER /etc/subuid\n```\n\nIf that prints nothing, add one, then **log out and back in**:\n\n```sh\nsudo usermod --add-subuids 100000-165535 --add-subgids 100000-165535 $USER\n```\n\n## 2. Get ztOS\n\n```sh\ngit clone --recurse-submodules https://github.com/Zerone-Laboratories/ztOS.git\ncd ztOS\ninstaller/ztos doctor\n```\n\n`doctor` should end with **this computer can build ztOS**. Install anything it says is missing, then run it again.\n\n## 3. Unlock the bootloader\n\n1. Back up the phone. Unlocking erases it.\n2. In Android: **Settings > About phone > Software information**, tap **Build number** seven times.\n3. **Settings > Developer options > OEM unlocking**: on.\n   No such switch? Connect to Wi-Fi and wait: Samsung shows it up to 7 days after setup.\n4. Turn the phone off. Hold **Volume Down + Bixby** and plug in the USB cable.\n5. On the warning screen, **long-press Volume Up** to unlock. The phone erases itself and restarts.\n6. Go through Android's setup quickly, and check **OEM unlocking** is still on.\n\n## 4. Put TWRP in RECOVERY\n\nDownload the TWRP image for the Galaxy S9 (`starlte`) from [twrp.me](https://twrp.me/samsung/samsunggalaxys9.html), and save it as `twrp-starlte.img`.\n\n1. Turn the phone off. Hold **Volume Down + Bixby + Power**, then press **Volume Up** for download mode.\n2. On the computer:\n\n   ```sh\n   heimdall flash --RECOVERY twrp-starlte.img --no-reboot\n   ```\n\n   (On Windows, Odin: TWRP in the **AP** slot, **Auto Reboot** off.)\n3. Hold **Volume Down + Power** to leave download mode, and **the moment the screen goes black**, switch to **Volume Up + Bixby + Power**. If Android starts instead, it puts its own recovery back: repeat this step.\n4. In TWRP, swipe to allow changes.\n\n## 5. Connect the phone in TWRP\n\nPlug the phone in and check the computer sees it:\n\n```sh\nadb devices\n```\n\nYou should see one device, as `recovery`. (Later, to start TWRP: power off, then hold **Volume Up + Bixby + Power**.)\n\n## 6. Build and install ztOS\n\n```sh\ninstaller/ztos install --target starlte --mode build-install\n```\n\nIt asks, in order:\n\n| Question | Answer |\n|---|---|\n| Go on? (after the phone guide) | `y` |\n| user name | the name you'll log in with |\n| password, then again | at least 4 characters; for logging in and `sudo` |\n| the phone's name | anything, e.g. `ztos` |\n| time zone | e.g. `Asia/Colombo` |\n| Start? | `y` |\n\nThen **wait 30 to 60 minutes** the first time while it builds the system. The S9's boot image comes ready-made from `prebuilts/boot/`.\n\nWhen it asks:\n\n1. **Write ztOS's boot image to BOOT?** Answer `y`. It is read back and checked.\n2. **Type ERASE to go on.** Type `ERASE`. The phone restarts into ztOS's rescue shell, and the system is written over USB in checked 256 MiB pieces: **10 to 20 minutes**.\n\nIf the cable comes out or it stops, run the same `installer/ztos install` command again: it carries on where it stopped.\n\n## 7. Start ztOS\n\nWhen the installer says **done**, hold **Power + Volume Up + Volume Down** until the phone restarts.\n\nThe first start takes **about a minute** while the system grows to fill the storage. Then log in with your user and password, and the Welcome app shows how ztOS works. With internet, Android apps set themselves up in the background on the first start (Waydroid downloads about 1 GB once).\n\n## If something goes wrong\n\n| What you see | What to do |\n|---|---|\n| `the phone is not in TWRP over adb` | Start TWRP (step 5), try another cable or USB port, then `adb devices` |\n| It waits for the phone on `172.16.42.1` | The phone hands your computer `172.16.42.2` over USB. If `ip addr` doesn't show it, set that USB network connection to **automatic (DHCP)**, then run the install again |\n| The phone is stuck in **ztOS Rescue** | `installer/ztos`, then choose **3** |\n| The phone goes back to TWRP by itself | ztOS didn't start and fell back safely. Run the install again from step 5 |\n| Back to Android | Flash Samsung's stock firmware for your model with Odin or Heimdall from download mode |"
   },
   "features": [
     {
