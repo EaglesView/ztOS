@@ -86,6 +86,25 @@
   .bar .working { background: #3f9a49; } .bar .partial { background: #d6a417; } .bar .broken { background: #c9473d; } .bar .untested { background: #8a919c; }
   .empty { padding: 2rem 0; color: var(--mute); }
 
+  /* Community Ports and Cross Ports */
+  .part { border-top: 2px solid var(--ink); padding-top: 1.5rem; margin-top: 1rem; }
+  .part > h2 { font-size: clamp(1.9rem, 4vw, 2.6rem); margin-bottom: 0.4rem; }
+  .part > p { max-width: 70ch; color: var(--mute); }
+  .exp { display: inline-block; font-size: 0.8125rem; font-weight: 450; letter-spacing: 0.04em; vertical-align: 0.5em; margin-left: 0.5rem;
+    padding: 0.1rem 0.45rem; border: 1px dashed var(--accent); color: var(--accent); }
+  .xgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 0.5rem; }
+  .xcard { color: inherit; text-decoration: none; display: flex; flex-direction: column; gap: 0.15rem; padding: 0.7rem 0.85rem;
+    border: 1px solid var(--line); background: var(--panel); transition: background-color 120ms linear, color 120ms linear; }
+  .xcard:hover { background: var(--ink); color: var(--paper); }
+  .xcard b { font-weight: 500; }
+  .xcard small { font-size: 0.8125rem; opacity: 0.75; }
+  .tags { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.35rem; }
+  .tag { font-size: 0.75rem; padding: 0.02rem 0.4rem; border: 1px solid var(--line); }
+  .tag.warn { background: var(--st-partial-bg); color: var(--st-partial-fg); border-color: transparent; }
+  .tag.bad { background: var(--st-broken-bg); color: var(--st-broken-fg); border-color: transparent; }
+  .tag.ok { background: var(--st-working-bg); color: var(--st-working-fg); border-color: transparent; }
+  .more-link { margin-top: 1rem; }
+
   /* a device */
   .crumbs { padding: 1.25rem 0 0; font-size: 0.9375rem; color: var(--mute); }
   .device-head { display: grid; grid-template-columns: minmax(0, 340px) minmax(0, 1fr); gap: clamp(1.25rem, 4vw, 2.5rem); padding: 1.25rem 0 2rem; align-items: start; }
@@ -245,6 +264,7 @@
   var view = document.getElementById('view');
   var q = document.getElementById('q');
   var devices = [];
+  var cross = [], crossMeta = {};
 
   // theme
   var root = document.documentElement, themeBtn = document.getElementById('theme');
@@ -304,33 +324,155 @@
   }
   function photo(d) { return DATA + encodeURIComponent(d.id) + '/' + encodeURIComponent(d.photo); }
 
-  // ---- the list, by maker ----
-  function list(maker) {
+  // ---- the list: Community Ports (ported and kept up by people, by maker),
+  // then Cross Ports (what ztConflo can build, updated every day) ----
+  function matches(words, fields) {
+    var t = fields.join(' ').toLowerCase();
+    return words.every(function (w) { return t.indexOf(w) !== -1; });
+  }
+  function byMaker(list, key) {
+    var m = {};
+    list.forEach(function (d) { (m[d[key]] = m[d[key]] || []).push(d); });
+    return Object.keys(m).sort(function (a, b) { return a.localeCompare(b); }).map(function (k) { return [k, m[k]]; });
+  }
+  function communityCards(ds) {
+    return '<div class="grid">' + ds.sort(function (a, b) { return a.name.localeCompare(b.name); }).map(function (d) {
+      var c = counts(d);
+      return '<a class="card" href="#/' + esc(d.id) + '"><img src="' + photo(d) + '" alt="" loading="lazy"><span class="meta"><b>' + esc(d.name) + '</b>' +
+        '<small>' + esc([d.model, d.codename].filter(Boolean).join(' · ')) + '</small>' +
+        '<small>' + c.working + ' working, ' + c.partial + ' partial, ' + c.broken + ' broken' + (c.untested ? ', ' + c.untested + ' untested' : '') + '</small>' +
+        bar(c) + '</span></a>';
+    }).join('') + '</div>';
+  }
+  function crossTags(x) {
+    return '<span class="tags">' +
+      (x.accelerated ? '<span class="tag ok">GPU: ' + esc(x.gpu_driver) + '</span>' : '<span class="tag bad">No GPU driver</span>') +
+      (x.archived ? '<span class="tag warn">Archived by postmarketOS</span>' : '<span class="tag">postmarketOS ' + esc(x.category) + '</span>') +
+      '</span>';
+  }
+  function crossCards(xs) {
+    return '<div class="xgrid">' + xs.sort(function (a, b) { return a.name.localeCompare(b.name); }).map(function (x) {
+      return '<a class="xcard" href="#/cross/' + esc(x.codename) + '"><b>' + esc(x.name) + '</b>' +
+        '<small>' + esc([x.codename, x.soc, x.year].filter(Boolean).join(' · ')) + '</small>' + crossTags(x) + '</a>';
+    }).join('') + '</div>';
+  }
+  var CROSS_INTRO = 'Phones ztConflo can build ztOS for: postmarketOS already boots them on mainline Linux, and ztConflo puts the ztOS system image (GSI) on that kernel. Nobody has tried ztOS on most of them. The list updates itself every day from postmarketOS. When one works for you, add it to Community Ports.';
+  function list(maker, part) {
     document.title = 'ztOS Supported Devices';
     var words = q.value.toLowerCase().split(/\s+/).filter(Boolean);
-    var shown = devices.filter(function (d) {
-      var t = [d.name, d.maker, d.model, d.codename, d.maintainer].join(' ').toLowerCase();
-      return words.every(function (w) { return t.indexOf(w) !== -1; });
-    });
-    var makers = {};
-    shown.forEach(function (d) { if (!maker || slug(d.maker) === maker) (makers[d.maker] = makers[d.maker] || []).push(d); });
+    var comm = devices.filter(function (d) { return (!maker || slug(d.maker) === maker) && matches(words, [d.name, d.maker, d.model, d.codename, d.maintainer]); });
+    var xs = cross.filter(function (x) { return (!maker || slug(x.manufacturer) === maker) && matches(words, [x.name, x.manufacturer, x.codename, x.soc]); });
     var h = '<section class="hero"><h1>Supported Devices</h1>' +
-      '<p>Every phone ztOS runs on, by maker. Open one for what works on it and its step-by-step installation guide. Ported a phone that isn\'t here? <a href="#/add">Add it</a>: moderators check every entry first.</p>' +
+      '<p>Every phone ztOS runs on. <b>Community Ports</b> are ported and kept up by people, with a tested installation guide. <b>Cross Ports</b> are phones ztConflo can build ztOS for automatically: experimental, mostly untried.</p>' +
       '<div class="legend">' + STATUSES.map(function (s) { return '<span><i class="st ' + s + '">' + LABEL[s] + '</i></span>'; }).join('') + '</div></section>';
-    var names = Object.keys(makers).sort(function (a, b) { return a.localeCompare(b); });
-    if (!names.length) h += '<p class="empty">' + (devices.length ? 'No phone matches “' + esc(q.value) + '”.' : 'No phones are listed yet.') + '</p>';
-    names.forEach(function (m) {
-      var ds = makers[m].sort(function (a, b) { return a.name.localeCompare(b.name); });
-      h += '<section class="vendor"><h2>' + esc(m) + '<small>' + ds.length + (ds.length === 1 ? ' phone' : ' phones') + '</small></h2><div class="grid">' +
-        ds.map(function (d) {
-          var c = counts(d);
-          return '<a class="card" href="#/' + esc(d.id) + '"><img src="' + photo(d) + '" alt="" loading="lazy"><span class="meta"><b>' + esc(d.name) + '</b>' +
-            '<small>' + esc([d.model, d.codename].filter(Boolean).join(' · ')) + '</small>' +
-            '<small>' + c.working + ' working, ' + c.partial + ' partial, ' + c.broken + ' broken' + (c.untested ? ', ' + c.untested + ' untested' : '') + '</small>' +
-            bar(c) + '</span></a>';
-        }).join('') + '</div></section>';
-    });
+    if (part !== 'cross') {
+      h += '<section class="part" id="community"><h2>Community Ports</h2><p>Ported, installed and checked on the phone itself; moderators review every entry. <a href="#/add">Add yours</a>.</p>';
+      var groups = byMaker(comm, 'maker');
+      if (!groups.length) h += '<p class="empty">' + (devices.length ? 'No community port matches.' : 'No phones are listed yet.') + '</p>';
+      groups.forEach(function (g) {
+        h += '<section class="vendor"><h2>' + esc(g[0]) + '<small>' + g[1].length + (g[1].length === 1 ? ' phone' : ' phones') + '</small></h2>' + communityCards(g[1]) + '</section>';
+      });
+      h += '</section>';
+    }
+    if (part !== 'community') {
+      h += '<section class="part" id="cross"><h2>Cross Ports<span class="exp">EXPERIMENTAL</span></h2><p>' + CROSS_INTRO +
+        (crossMeta.generated ? ' Last updated ' + esc(crossMeta.generated.slice(0, 10)) + '.' : '') + '</p>';
+      var xg = byMaker(xs, 'manufacturer');
+      if (!xg.length) h += '<p class="empty">' + (cross.length ? 'No cross port matches.' : 'The Cross Ports list hasn\'t loaded.') + '</p>';
+      // on the overview, a few per maker; the Cross Ports page shows them all
+      var limit = (part === 'cross' || maker || words.length) ? Infinity : 6;
+      xg.forEach(function (g) {
+        h += '<section class="vendor"><h2>' + esc(g[0]) + '<small>' + g[1].length + (g[1].length === 1 ? ' phone' : ' phones') + '</small></h2>' +
+          crossCards(g[1].slice(0, limit)) +
+          (g[1].length > limit ? '<p class="more-link"><a href="#/cross/maker/' + esc(slug(g[0])) + '">All ' + g[1].length + ' ' + esc(g[0]) + ' phones →</a></p>' : '') + '</section>';
+      });
+      h += '</section>';
+    }
     view.innerHTML = h;
+  }
+
+  // ---- one cross port: what ztConflo knows, and how to build it ----
+  function crossDevice(x) {
+    document.title = x.name + ' · Cross Ports · ztOS Supported Devices';
+    var gsi = 'build/ztos/gsi/ztos-gsi-0.2.0-aarch64.tar.zst';
+    var guide = [
+      '> **Experimental.** ztConflo builds this from postmarketOS\'s port of the ' + x.name + '. Nobody may have tried ztOS on it yet, and flashing erases the phone.' +
+        (x.accelerated ? '' : ' **This phone has no GPU driver: ztOS installs, but its shell (ztMETRO) will not start.**') +
+        (x.archived ? ' postmarketOS no longer maintains this port.' : ''),
+      '',
+      '## 1. Install the tools',
+      '',
+      '```sh',
+      'sudo pacman -S --needed git python util-linux libarchive dosfstools mtools e2fsprogs \\',
+      '    qemu-user-static qemu-user-static-binfmt android-tools' + (x.flash_method.indexOf('heimdall') === 0 ? ' heimdall' : ''),
+      '```',
+      '',
+      '## 2. Build the ztOS system image (GSI)',
+      '',
+      '```sh',
+      'git clone https://github.com/Zerone-Laboratories/ztOS.git',
+      'cd ztOS',
+      'installer/ztos doctor',
+      'installer/ztos build --target gsi',
+      'cd ..',
+      '```',
+      '',
+      'This takes 30 to 60 minutes and writes `ztOS/' + gsi + '`.',
+      '',
+      '## 3. Get ztConflo and check the phone',
+      '',
+      '```sh',
+      'git clone https://github.com/Zerone-Laboratories/ztconflo.git',
+      'cd ztconflo',
+      'python -m ztconflo lookup ' + x.codename,
+      '```',
+      '',
+      '## 4. Try the build first',
+      '',
+      'This checks the phone\'s kernel against what ztOS needs and prints every command, without running any:',
+      '',
+      '```sh',
+      'python -m ztconflo build ' + x.codename + ' \\',
+      '    --gsi ../ztOS/' + gsi + ' --dry-run',
+      '```',
+      '',
+      '## 5. Build and flash',
+      '',
+      'Unlock the bootloader the way the [postmarketOS wiki](https://wiki.postmarketos.org/index.php?search=' + encodeURIComponent(x.codename) + ') says for this phone, then put it in ' +
+        (x.flash_method.indexOf('heimdall') === 0 ? 'download mode' : 'fastboot mode') + ' and plug it in.',
+      '',
+      '```sh',
+      'python -m ztconflo build ' + x.codename + ' \\',
+      '    --gsi ../ztOS/' + gsi,
+      'python -m ztconflo flash ' + x.codename,
+      '```',
+      '',
+      '`flash` shows the partitions it will write and asks before writing.',
+      '',
+      '## 6. Check what works, and share it',
+      '',
+      'On the phone, over USB (`ssh` to `172.16.42.1`) or in its terminal:',
+      '',
+      '```sh',
+      'ztos-ial status',
+      'ztos-ial test',
+      '```',
+      '',
+      'If it runs, [add it to Community Ports](#/add) with a photo and what works, so others can install it with confidence.'
+    ].join('\n');
+    var specs = [['Maker', x.manufacturer], ['Codename', x.codename], ['SoC', x.soc], ['GPU', x.accelerated ? x.gpu_driver + ' (Mesa)' : 'No Mesa driver'],
+      ['Kernel', x.kernel], ['Screen', x.screen], ['Released', x.year], ['Flashed with', x.flash_method], ['postmarketOS', x.category + (x.archived ? ' (archived)' : '')]]
+      .filter(function (r) { return r[1]; });
+    view.innerHTML = '<p class="crumbs"><a href="#/cross">Cross Ports</a> / ' + esc(x.manufacturer) + '</p>' +
+      '<section class="device-head" style="grid-template-columns:minmax(0,1fr)"><div>' +
+      '<h1>' + esc(x.name) + '<span class="exp">EXPERIMENTAL</span></h1><p class="sub">' + esc([x.codename, x.soc, x.year].filter(Boolean).join(' · ')) + ' · a cross port, through ztConflo</p>' +
+      crossTags(x) +
+      '<div class="actions" style="margin:1.25rem 0"><a class="btn" href="https://wiki.postmarketos.org/index.php?search=' + encodeURIComponent(x.codename) + '" rel="noopener">postmarketOS wiki page</a>' +
+      '<a class="btn ghost" href="#/add">It works: add it to Community Ports</a></div>' +
+      '<aside class="infobox" style="max-width:640px"><div class="cap">What ztConflo knows</div><dl>' +
+      specs.map(function (r) { return '<dt>' + esc(r[0]) + '</dt><dd>' + esc(r[1]) + '</dd>'; }).join('') + '</dl></aside></div></section>' +
+      '<nav class="tabs" aria-label="Sections"><a aria-current="true">How to build it</a></nav><section class="panel" id="panel"></section>';
+    document.getElementById('panel').appendChild(markdown(guide));
   }
 
   // ---- one phone ----
@@ -560,8 +702,8 @@
     var makers = {};
     devices.forEach(function (d) { (makers[d.maker] = makers[d.maker] || []).push(d); });
     var here = parts[0] || '';
-    var h = '<li><a href="#/"' + (!here ? ' aria-current="true"' : '') + '>All devices<small>' + devices.length + '</small></a></li>' +
-      '<li class="group">Makers</li>';
+    var h = '<li><a href="#/"' + (!here ? ' aria-current="true"' : '') + '>All devices<small>' + (devices.length + cross.length) + '</small></a></li>' +
+      '<li class="group">Community Ports</li><li><a href="#/community"' + (here === 'community' ? ' aria-current="true"' : '') + '>All community ports<small>' + devices.length + '</small></a></li>';
     Object.keys(makers).sort(function (a, b) { return a.localeCompare(b); }).forEach(function (m) {
       var ds = makers[m].sort(function (a, b) { return a.name.localeCompare(b.name); });
       h += '<li><a href="#/maker/' + esc(slug(m)) + '"' + (here === 'maker' && parts[1] === slug(m) ? ' aria-current="true"' : '') + '>' + esc(m) + '<small>' + ds.length + '</small></a><ul class="sub-nav">' +
@@ -573,6 +715,13 @@
             }).join('') + '</ul>' : '') + '</li>';
         }).join('') + '</ul></li>';
     });
+    var xm = {};
+    cross.forEach(function (x) { xm[x.manufacturer] = (xm[x.manufacturer] || 0) + 1; });
+    h += '<li class="group">Cross Ports · experimental</li><li><a href="#/cross"' + (here === 'cross' && !parts[1] ? ' aria-current="true"' : '') + '>All cross ports<small>' + cross.length + '</small></a><ul class="sub-nav">' +
+      Object.keys(xm).sort(function (a, b) { return a.localeCompare(b); }).map(function (m) {
+        var cur = here === 'cross' && ((parts[1] === 'maker' && parts[2] === slug(m)) || cross.some(function (x) { return x.codename === parts[1] && x.manufacturer === m; }));
+        return '<li><a href="#/cross/maker/' + esc(slug(m)) + '"' + (cur ? ' aria-current="true"' : '') + '>' + esc(m) + '<small>' + xm[m] + '</small></a></li>';
+      }).join('') + '</ul></li>';
     h += '<li class="group">Contribute</li><li><a href="#/add"' + (here === 'add' ? ' aria-current="true"' : '') + '>Add your port</a></li>';
     nav.innerHTML = h;
   }
@@ -584,7 +733,13 @@
     window.scrollTo(0, 0);
     renderNav(parts);
     if (parts[0] === 'add') return add();
-    if (parts[0] === 'maker') return list(parts[1]);
+    if (parts[0] === 'maker') return list(parts[1], 'community');
+    if (parts[0] === 'community') return list(null, 'community');
+    if (parts[0] === 'cross') {
+      if (parts[1] === 'maker') return list(parts[2], 'cross');
+      var x = cross.filter(function (c) { return c.codename === parts[1]; })[0];
+      return x ? crossDevice(x) : list(null, 'cross');
+    }
     var d = devices.filter(function (x) { return x.id === parts[0]; })[0];
     if (d) return device(d, ['install', 'works', 'quirks'].indexOf(parts[1]) >= 0 ? parts[1] : 'install');
     list();
@@ -599,6 +754,13 @@
     }));
   }).then(function (list) {
     devices = list.filter(Boolean);
+    return fetch(DATA + 'cross-ports.json', { cache: 'no-cache' }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; });
+  }).then(function (x) {
+    if (x) { cross = x.devices || []; crossMeta = x; }
+    // one spelling per maker (postmarketOS has both "Asus" and "ASUS"): the commonest
+    var seen = {};
+    cross.forEach(function (c) { var k = slug(c.manufacturer); (seen[k] = seen[k] || {})[c.manufacturer] = ((seen[k] || {})[c.manufacturer] || 0) + 1; });
+    cross.forEach(function (c) { var n = seen[slug(c.manufacturer)]; c.manufacturer = Object.keys(n).sort(function (a, b) { return n[b] - n[a] || a.localeCompare(b); })[0]; });
     route();
   }).catch(function () {
     view.innerHTML = '<p class="empty">The device list didn\'t load. Reload the page to try again.</p>';
