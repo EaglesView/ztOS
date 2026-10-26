@@ -1,5 +1,6 @@
 {
   "devices": [
-    "samsung-starlte"
+    "samsung-starlte",
+    "xiaomi-klee"
   ]
 }
