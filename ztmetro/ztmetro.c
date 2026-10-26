@@ -800,6 +800,10 @@ static void auth_finish(struct zt_server *);
 static void draw_dialog(struct zt_server *);
 static void run_detached(const char *, const char *, const char *, const char *);
 
+/* When testing the shell on x86, we need to toggle this
+ * so the shell knows not to wait for device-specific features. */
+static bool g_nested;
+
 static uint32_t now_ms(void) {
 	struct timespec ts;
 	clock_gettime(CLOCK_MONOTONIC, &ts);
@@ -1966,6 +1970,9 @@ static void haptics_init(struct zt_server *server) {
 	}
 	server->haptic_fd = -1;
 	server->haptic_scan_ms = now_ms();
+	if (g_nested) {
+		return;
+	}
 	DIR *dir = opendir("/dev/input");
 	struct dirent *entry;
 	while (dir && (entry = readdir(dir))) {
@@ -2508,6 +2515,10 @@ static void backlight_init(struct zt_server *server) {
 	bl.usable = 0;
 	bl.mode = BL_NONE;
 	bl.server = server;
+	if (g_nested) {
+		wlr_log(WLR_INFO, "backlight: none (nested, the desktop's own is left alone)");
+		return;
+	}
 	bool has_device = false, is_s9 = false;
 #ifdef HAVE_ZTOS_IAL
 	/* ztOSIAL's Display1 names the panel and how to drive it: "table" and
@@ -5307,7 +5318,7 @@ static int boot_check_sensorhub(void *data) {
 	struct zt_server *server = data;
 	bool test_fail = getenv("ZT_TEST_SENSORHUB_FAIL") != NULL;
 
-	bool sensor_ready = server->boot_skip_sensorhub;
+	bool sensor_ready = server->boot_skip_sensorhub || g_nested;
 	if (!sensor_ready && !test_fail) {
 		char buf[16] = {0};
 		int fd = open("/sys/class/sec/sensorhub/ready", O_RDONLY);
@@ -5321,7 +5332,7 @@ static int boot_check_sensorhub(void *data) {
 	}
 
 	uint32_t elapsed = now_ms() - server->boot_wait_started_ms;
-	bool android_ready = access("/run/ztos-waydroid-boot-ready", F_OK) == 0;
+	bool android_ready = g_nested || access("/run/ztos-waydroid-boot-ready", F_OK) == 0;
 	if ((android_ready && (sensor_ready || server->sensorhub_fail_screen)) || elapsed >= 45000) {
 		if (android_ready && sensor_ready) {
 			wlr_log(WLR_INFO, "boot: sensor hub and Waydroid ready, starting transition");
@@ -6346,6 +6357,12 @@ static void launch_cmd(struct zt_server *server, const char *cmd) {
 
 /* Start a helper and do not wait for it: nothing here may block a frame. */
 static void run_detached(const char *program, const char *a1, const char *a2, const char *a3) {
+	/* nested, these would act on the desktop (nmcli, wpctl, systemctl reboot,
+	 * pacman…); only the app list's own helper runs */
+	if (g_nested && strcmp(program, "ztapps") != 0) {
+		wlr_log(WLR_INFO, "nested: not running %s %s", program, a1 ? a1 : "");
+		return;
+	}
 	pid_t pid = fork();
 	if (pid == 0) {
 		setsid();
@@ -11035,6 +11052,11 @@ static void output_frame(struct wl_listener *listener, void *data) {
 static void output_request_state(struct wl_listener *listener, void *data) {
 	struct zt_output *output = wl_container_of(listener, output, request_state);
 	const struct wlr_output_event_request_state *event = data;
+	/* a window on a desktop asks for its new size when it is resized; the
+	 * layout is worked out once, for the phone-shaped size it opened at */
+	if (wl_list_empty(&output->wlr_output->modes)) {
+		return;
+	}
 	wlr_output_commit_state(output->wlr_output, event->state);
 }
 
@@ -11063,6 +11085,15 @@ static void server_new_output(struct wl_listener *listener, void *data) {
 	struct wlr_output_mode *mode = wlr_output_preferred_mode(wlr_output);
 	if (mode) {
 		wlr_output_state_set_mode(&state, mode);
+	} else if (wl_list_empty(&wlr_output->modes)) {
+		/* a window on a desktop (Wayland or X11): no panel to take a mode
+		 * from, so a phone's shape, ZTMETRO_SIZE=WxH in pixels */
+		int w = 540, h = 1110;
+		const char *size = getenv("ZTMETRO_SIZE");
+		if (size && sscanf(size, "%dx%d", &w, &h) != 2) {
+			w = 540, h = 1110;
+		}
+		wlr_output_state_set_custom_mode(&state, w, h, 0);
 	}
 	wlr_output_state_set_scale(&state, server->scale);
 	wlr_output_commit_state(wlr_output, &state);
@@ -11399,6 +11430,13 @@ int main(int argc, char *argv[]) {
 	 * a CPU swizzle of the whole buffer, 130 ms for a terminal's first frames.
 	 * Linear it is a plain copy, and the GPU barely notices on our few quads. */
 	setenv("PAN_MESA_DEBUG", "noafbc,linear", true);
+
+	/* the rule wlr_backend_autocreate picks a window by: a display to join
+	 * means another desktop is already on this machine's screen */
+	g_nested = getenv("WAYLAND_DISPLAY") || getenv("WAYLAND_SOCKET") || getenv("DISPLAY");
+	if (g_nested) {
+		wlr_log(WLR_INFO, "nested: in a window, hardware and system actions off");
+	}
 
 	server.wl_display = wl_display_create();
 	server.loop = wl_display_get_event_loop(server.wl_display);
