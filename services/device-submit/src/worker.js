@@ -227,7 +227,7 @@ async function post(env, device, photo, existing) {
 		JSON.stringify({
 			name: `${existing ? 'Update: ' : ''}${device.name} (${device.codename})`.slice(0, 100),
 			message: {
-				content: `New entry for the [device list](${env.SITE}/#devices). Moderators: **Accept** puts it on the site, **Reject** asks for a reason and locks this post.`,
+				content: `New entry for the [device list](https://devices.ztos.online/). Moderators: **Accept** puts it on the site, **Reject** asks for a reason and locks this post.`,
 				embeds: [embed],
 				components: buttons(),
 				allowed_mentions: { parse: [] },
@@ -339,7 +339,7 @@ async function interactions(request, env, ctx) {
 				await discord(env, `/channels/${interaction.channel_id}/messages`, {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ content: `❌ Rejected by <@${who.id}>: ${reason}\nFix it and send the entry again from ${env.SITE}/#devices.`, allowed_mentions: { parse: [] } }),
+					body: JSON.stringify({ content: `❌ Rejected by <@${who.id}>: ${reason}\nFix it and send the entry again from https://devices.ztos.online/add.`, allowed_mentions: { parse: [] } }),
 				});
 				await discord(env, `/channels/${interaction.channel_id}`, {
 					method: 'PATCH',
@@ -384,7 +384,7 @@ async function accept(env, interaction, who) {
 		if (problems.length || !/^photo\.(jpg|png|webp)$/.test(raw.photo)) throw new Error(`the entry is incomplete: ${problems.join(', ')}`);
 		await commit(env, device, bytes, `${who.global_name || who.username}`);
 		await editOriginal(env, interaction, {
-			content: `✅ Accepted by <@${who.id}>. It is in the [device list](${env.SITE}/#device/${device.id}) within a few minutes.`,
+			content: `✅ Accepted by <@${who.id}>. It is in the [device list](https://devices.ztos.online/${device.id}) within a few minutes.`,
 			components: [],
 		});
 		await discord(env, `/channels/${interaction.channel_id}`, {
