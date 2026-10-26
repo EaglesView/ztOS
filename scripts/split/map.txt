@@ -47,6 +47,7 @@ ztos-core       ztmetro/
 ztos-core       apps/
 ztos-core       sdk/
 ztos-core       android/
+ztos-core       prebuilts/ztOSAndroidRuntimeV1/
 ztos-core       os/
 ztos-core       rootfs/
 ztos-core       design/
