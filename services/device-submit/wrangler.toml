@@ -6,7 +6,7 @@ preview_urls = false
 
 [vars]
 SITE = "https://ztos.online"
-ALLOWED_ORIGINS = "https://ztos.online,https://zerone-laboratories.github.io,http://localhost:8000"
+ALLOWED_ORIGINS = "https://ztos.online,https://devices.ztos.online,https://zerone-laboratories.github.io,http://localhost:8000"
 GITHUB_REPO = "Zerone-Laboratories/ztOS"
 GITHUB_BRANCH = "main"
 # the #ztos-device-ports forum on the ztOS Mobile Discord

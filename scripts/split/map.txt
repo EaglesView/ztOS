@@ -53,6 +53,7 @@ ztos-core       rootfs/
 ztos-core       design/
 ztos-core       docs/
 ztos-core       services/
+ztos-core       devices-site/
 ztos-core       scripts/
 ztos-core       README.md
 ztos-core       LICENSE

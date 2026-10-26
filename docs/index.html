@@ -246,60 +246,32 @@
   .legend i { margin-right: 0.35rem; }
   .mute { color: var(--mute); }
 
-  .devices { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 0.75rem; }
-  .device-card { font: inherit; color: inherit; text-align: left; cursor: pointer; padding: 0; display: flex; flex-direction: column;
-    border: 1px solid var(--line); background: var(--panel); transition: background-color 120ms linear, color 120ms linear; }
-  .device-card:hover { background: var(--ink); color: var(--paper); }
-  .device-card img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; object-position: center; border-bottom: 1px solid var(--line); background: var(--faint); }
-  .device-card .meta { padding: 0.7rem 0.85rem 0.85rem; display: flex; flex-direction: column; gap: 0.2rem; }
-  .device-card b { font-weight: 500; font-size: 1.0625rem; }
-  .device-card small { font-size: 0.8125rem; opacity: 0.75; }
-  .bar { display: flex; height: 6px; margin-top: 0.55rem; border: 1px solid var(--line); }
-  .bar span { display: block; height: 100%; }
-  .bar .working { background: #3f9a49; } .bar .partial { background: #d6a417; } .bar .broken { background: #c9473d; } .bar .untested { background: #8a919c; }
 
-  /* Dialogs: the device page and the form */
-  dialog.sheet { width: min(960px, calc(100vw - 2rem)); max-height: calc(100dvh - 2rem); padding: 0; border: 1px solid var(--line);
-    background: var(--paper); color: var(--ink); }
-  dialog.sheet::backdrop { background: rgba(0, 0, 0, 0.55); }
-  .sheet-head { position: sticky; top: 0; z-index: 1; display: flex; justify-content: space-between; align-items: center; gap: 1rem;
-    padding: 0.75rem 1.25rem; background: var(--paper); border-bottom: 1px solid var(--line); }
-  .sheet-head h2 { font-size: 1.5rem; }
-  .sheet-body { padding: 1.25rem; }
-  .sheet-body h3 { font-size: 1.25rem; margin: 1.75rem 0 0.75rem; }
-  .device-top { display: grid; grid-template-columns: minmax(0, 220px) minmax(0, 1fr); gap: 1.25rem; align-items: start; }
-  .device-top figure { border: 1px solid var(--line); background: var(--panel); }
-  .device-top figcaption { border-top: 1px solid var(--line); padding: 0.4rem 0.6rem; font-size: 0.8125rem; color: var(--mute); }
-  .sheet .infobox dl { grid-template-columns: 8rem 1fr; }
-  @media (max-width: 640px) { .device-top { grid-template-columns: 1fr; } .device-top figure { max-width: 260px; } }
-
-  form.port label { display: block; font-size: 0.9375rem; font-weight: 450; margin: 0 0 0.3rem; }
-  form.port .hint { color: var(--mute); font-size: 0.8125rem; font-weight: 350; }
-  form.port input, form.port textarea, form.port select { font: inherit; font-size: 0.9375rem; width: 100%; color: var(--ink);
-    background: var(--panel); border: 1px solid var(--line); padding: 0.45rem 0.6rem; }
-  form.port textarea { min-height: 4.5rem; resize: vertical; }
-  form.port input:focus-visible, form.port textarea:focus-visible, form.port select:focus-visible { outline: 1px solid var(--ink); outline-offset: 2px; }
-  .grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.9rem 1rem; }
-  @media (max-width: 640px) { .grid2 { grid-template-columns: 1fr; } }
-  .rows { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 0.6rem; }
-  .row { display: grid; gap: 0.5rem; align-items: start; }
-  .row.spec { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) auto; }
-  .row.step { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) auto; }
-  .row.feature { grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr) 8.5rem minmax(0, 1.5fr) auto; }
-  .row.note { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) auto; }
-  @media (max-width: 760px) { .row.spec, .row.step, .row.feature, .row.note { grid-template-columns: 1fr; border-bottom: 1px solid var(--faint); padding-bottom: 0.6rem; } }
-  .row button { font: inherit; font-size: 0.875rem; cursor: pointer; background: transparent; color: var(--mute); border: 1px solid var(--line); padding: 0.45rem 0.6rem; }
-  .row button:hover { background: var(--ink); color: var(--paper); }
-  .row select.working { background: var(--st-working-bg); color: var(--st-working-fg); }
-  .row select.partial { background: var(--st-partial-bg); color: var(--st-partial-fg); }
-  .row select.broken { background: var(--st-broken-bg); color: var(--st-broken-fg); }
-  .row select.untested { background: var(--st-untested-bg); color: var(--st-untested-fg); }
-  fieldset { border: 0; padding: 0; margin: 1.75rem 0 0; min-width: 0; }
-  legend { font-size: 1.25rem; font-weight: 300; padding: 0; margin-bottom: 0.4rem; }
-  .photo-pick { display: flex; gap: 1rem; align-items: center; }
-  .photo-pick img { width: 90px; height: 120px; object-fit: cover; border: 1px solid var(--line); background: var(--faint); }
-  .hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
-  .form-status { margin-top: 1rem; }
+  /* Device list carousel: one large card at a time */
+  .carousel { border: 1px solid var(--line); background: var(--panel); }
+  .track { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
+  .track::-webkit-scrollbar { display: none; }
+  .slide { flex: 0 0 100%; scroll-snap-align: start; display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    color: inherit; text-decoration: none; min-height: 360px; }
+  .slide img { width: 100%; height: 100%; object-fit: cover; border-right: 1px solid var(--line); background: var(--faint); }
+  .slide-body { display: flex; flex-direction: column; gap: 0.35rem; padding: 1.25rem 1.5rem; }
+  .slide-body > small { color: var(--mute); font-size: 0.875rem; }
+  .slide-body b { font-weight: 300; font-stretch: 90%; font-size: clamp(1.75rem, 3.5vw, 2.5rem); letter-spacing: -0.03em; line-height: 1.05; }
+  .slide .pills { display: flex; flex-wrap: wrap; gap: 0.35rem; margin: 0.4rem 0; }
+  .slide .summary { font-size: 0.9375rem; margin-bottom: 0.4rem; }
+  .slide .kv { display: grid; grid-template-columns: 6.5rem 1fr; gap: 0.75rem; font-size: 0.875rem; border-top: 1px solid var(--faint); padding-top: 0.35rem; }
+  .slide .kv span { color: var(--mute); }
+  .slide .more { margin-top: auto; padding-top: 0.75rem; font-weight: 450; }
+  .slide:hover .more { text-decoration: underline; text-underline-offset: 0.2em; }
+  .carousel-nav { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.6rem 0.75rem; border-top: 1px solid var(--line); }
+  .carousel.single .carousel-nav { display: none; }
+  .dots { display: flex; gap: 0.4rem; flex-wrap: wrap; justify-content: center; }
+  .dots button { width: 0.7rem; height: 0.7rem; padding: 0; border: 1px solid var(--line); background: transparent; cursor: pointer; }
+  .dots button[aria-current="true"] { background: var(--ink); }
+  @media (max-width: 760px) {
+    .slide { grid-template-columns: 1fr; }
+    .slide img { max-height: 280px; border-right: 0; border-bottom: 1px solid var(--line); }
+  }
   @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
 </head>
@@ -319,20 +291,22 @@
     </div>
     <ul id="toc">
       <li><a href="#overview">Overview</a></li>
+      <li>
+        <a href="#installing">Installing</a>
+        <ul class="sub-nav">
+          <li><a href="#install-computer">Get the computer ready</a></li>
+          <li><a href="#install-emulator">Try it in the emulator</a></li>
+          <li><a href="#install-listed">On a listed phone</a></li>
+          <li><a href="#install-new">Port it to another phone</a></li>
+          <li><a href="#install-help">If something goes wrong</a></li>
+        </ul>
+      </li>
       <li><a href="#screens">Screenshots</a></li>
       <li><a href="#ztmetro">ztMETRO</a></li>
       <li><a href="#apps">Apps</a></li>
       <li><a href="#sdk">The SDK</a></li>
       <li><a href="#services">System services</a></li>
       <li><a href="#structure">GSI and ztOSIAL</a></li>
-      <li>
-        <a href="#installing">Installing</a>
-        <ul class="sub-nav">
-          <li><a href="#install-emulator">In the emulator</a></li>
-          <li><a href="#install-listed">On a listed phone</a></li>
-          <li><a href="#install-new">On another phone</a></li>
-        </ul>
-      </li>
       <li><a href="#devices">Device list</a></li>
       <li><a href="#ztconflo">ztConflo: other phones</a></li>
       <li><a href="#status">Status and next</a></li>
@@ -377,6 +351,77 @@
           <dt>Licence</dt><dd>GPL 3; ztOSIAL LGPL 2.1 or later</dd>
         </dl>
       </aside>
+    </div>
+  </section>
+
+  <section class="section" id="installing">
+    <div class="wrap">
+      <div><h2>Installing</h2><p class="sub">From nothing to ztOS, in the emulator or on a phone.</p></div>
+      <div class="body">
+        <p>There are three ways in. Pick one, then follow its steps from the top: each step says what to type, what you'll see, and how long it takes.</p>
+        <div class="ladder">
+          <div><b><a href="#install-emulator">Try it</a></b><span>In the emulator on your computer. Nothing is flashed, nothing is erased. About an hour, mostly waiting.</span></div>
+          <div><b><a href="#install-listed">A listed phone</a></b><span>A phone in the <a href="#devices">device list</a>. Replaces Android and erases the phone.</span></div>
+          <div><b><a href="#install-new">Another phone</a></b><span>A phone that runs postmarketOS on mainline Linux, built with ztConflo. For people comfortable porting.</span></div>
+        </div>
+
+        <h3 id="install-computer">Get the computer ready</h3>
+        <p>Every way starts here. You need a Linux computer, x86-64 or ARM, with about 15 GB free and an internet connection: the build downloads Arch Linux ARM and about 2 GB of packages. It never asks for <code>sudo</code>; only installing the tools below does.</p>
+        <ol class="steps">
+          <li><div><b>Install the tools</b><span>On Arch Linux (tested):<br><code>sudo pacman -S --needed git util-linux libarchive dosfstools mtools e2fsprogs qemu-user-static qemu-user-static-binfmt qemu-system-aarch64 edk2-aarch64 qemu-hw-display-virtio-gpu-pci qemu-ui-gtk android-tools socat</code><br>On Debian or Ubuntu (not yet tested), the same tools are: <code>sudo apt install git uidmap libarchive-tools dosfstools mtools e2fsprogs qemu-user-static binfmt-support qemu-system-arm qemu-efi-aarch64 adb socat</code></span></div></li>
+          <li><div><b>Give your account a range of user IDs</b><span>The build runs as you, in a user namespace. <code>grep $USER /etc/subuid</code> should print a line. If it prints nothing: <code>sudo usermod --add-subuids 100000-165535 --add-subgids 100000-165535 $USER</code>, then log out and back in.</span></div></li>
+          <li><div><b>Get ztOS</b><span><code>git clone https://github.com/Zerone-Laboratories/ztOS.git</code><br><code>cd ztOS</code><br>For a phone whose entry says so, also <code>git submodule update --init</code> (the phone's kernel tree).</span></div></li>
+          <li><div><b>Check</b><span><code>installer/ztos doctor</code> should say <i>this computer can build ztOS</i>, and list what the emulator and phones over USB still need. Fix anything it names before going on.</span></div></li>
+        </ol>
+
+        <h3 id="install-emulator">Try it in the emulator</h3>
+        <ol class="steps">
+          <li><div><b>Build it</b><span><code>installer/ztos install --target qemu --mode build-install</code><br>It asks for a user name, a password (for logging in and <code>sudo</code>), a name for the phone and your time zone, then <i>Start?</i>: answer yes.</span></div></li>
+          <li><div><b>Wait</b><span>30 to 60 minutes the first time: ARM programs run emulated. Later builds reuse what was downloaded; <code>--fresh</code> starts again from scratch. If the network drops, run the same command again.</span></div></li>
+          <li><div><b>Start it</b><span>Answer yes to <i>Start it now?</i>. A phone-shaped window opens (540×1110) and ztOS starts in about a minute.</span></div></li>
+          <li><div><b>Use it</b><span>The mouse is your finger: click to tap, drag to swipe, hold to hold. Escape is the back button, and the computer's keyboard types. <code>ssh -p 2222 &lt;user&gt;@localhost</code> gets a shell.</span></div></li>
+          <li><div><b>Next time</b><span><code>installer/ztos emulator</code> starts it again. <code>--gl</code> draws with your computer's GPU (faster; some NVIDIA laptops refuse it), and <code>--headless</code> runs it without a window, on VNC at <code>127.0.0.1:5905</code>.</span></div></li>
+        </ol>
+        <p>The emulator has no modem, sensors or battery, so those parts of ztOS stay off there.</p>
+
+        <h3 id="install-listed">Install it on a listed phone</h3>
+        <div class="alert" role="note"><b>This erases the phone</b>Android and everything in its storage are replaced. Back up first. Each phone's entry says what is never touched (on Samsung phones, the IMEI and modem calibration).</div>
+        <ol class="steps">
+          <li><div><b>Open your phone's entry</b><span>Find it on <a href="https://devices.ztos.online">devices.ztos.online</a> and check the model number matches yours exactly: a phone sold under the same name with another chip will not boot. Read its <i>What works</i> table and quirks.</span></div></li>
+          <li><div><b>Unlock the bootloader and install the recovery it names</b><span>Usually in Android: Settings &gt; About phone, tap Build number seven times, then Developer options &gt; OEM unlocking. Then flash the recovery (TWRP on Samsung phones) the way the entry says. Unlocking erases the phone once already.</span></div></li>
+          <li><div><b>Follow its installation guide</b><span>Each phone's page has a full guide, written by its maintainer, with every command to copy. For most phones they come down to: start the recovery, plug the phone in, run <code>installer/ztos install --target &lt;phone&gt;</code>, confirm writing the boot image, type <code>ERASE</code> to write the system, and restart.</span></div></li>
+          <li><div><b>First start</b><span>About a minute while ztOS grows to fill the storage, then the Welcome app shows how ztOS is used. Android apps are set up in the background the first time (Waydroid downloads its images once, about 1 GB).</span></div></li>
+        </ol>
+
+        <h3 id="install-new">Port it to another phone</h3>
+        <p>ztOS is a generic system image (GSI) plus a device layer for each phone (see <a href="#structure">GSI and ztOSIAL</a>). For a phone postmarketOS already boots on mainline Linux, <a href="#ztconflo">ztConflo</a> builds an image from the GSI with a device layer made for it.</p>
+        <ol class="steps">
+          <li><div><b>Build the GSI</b><span><code>installer/ztos build --target gsi</code> makes <code>build/ztos/gsi/ztos-gsi-0.2.0-aarch64.tar.zst</code>, with its <code>.sha256</code>.</span></div></li>
+          <li><div><b>Get ztConflo</b><span><code>git clone https://github.com/Zerone-Laboratories/ztconflo.git</code>, then in it <code>python -m ztconflo lookup &lt;codename&gt;</code> says whether your phone can be built. The codename is on the phone's postmarketOS wiki page.</span></div></li>
+          <li><div><b>Try it first</b><span><code>python -m ztconflo build &lt;codename&gt; --gsi &lt;path to the GSI&gt; --dry-run</code> checks the phone's kernel against what ztOS needs and shows every command, without running them.</span></div></li>
+          <li><div><b>Build and flash</b><span>The same without <code>--dry-run</code> writes <code>out/&lt;codename&gt;/</code>; <code>python -m ztconflo flash &lt;codename&gt;</code> shows the partitions and asks before writing.</span></div></li>
+          <li><div><b>See what works</b><span>On the phone, <code>ztos-ial status</code> and <code>ztos-ial test</code>. The <a href="https://github.com/Zerone-Laboratories/ztos-ial">ztOSIAL porting guide</a> shows how to fix what doesn't.</span></div></li>
+          <li><div><b>Share it</b><span><a href="https://devices.ztos.online/#/add">Add it to the device list</a> with its photo, steps and what works, so others can install it too.</span></div></li>
+        </ol>
+
+        <h3 id="install-help">If something goes wrong</h3>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>What you see</th><th>What to do</th></tr></thead>
+            <tbody>
+              <tr><td><code>doctor</code> names a missing tool</td><td>Install it (the list above), then run <code>installer/ztos doctor</code> again.</td></tr>
+              <tr><td><i>a /etc/subuid range for …</i></td><td><code>sudo usermod --add-subuids 100000-165535 --add-subgids 100000-165535 $USER</code>, then log out and back in.</td></tr>
+              <tr><td>The build stops while downloading</td><td>Run the same command again: it carries on. <code>--fresh</code> throws the old build away first.</td></tr>
+              <tr><td><i>the phone is not in TWRP over adb</i></td><td>Start the recovery and plug the phone in; <code>adb devices</code> should show it as <code>recovery</code>. Try another cable or USB port; some cables only charge.</td></tr>
+              <tr><td>Writing the system waits for the phone on <code>172.16.42.1</code></td><td>The phone is on a USB network and hands your computer <code>172.16.42.2</code>. If <code>ip addr</code> shows no such address, set that USB network connection to automatic (DHCP) in your network settings, then run the install again: it carries on where it stopped.</td></tr>
+              <tr><td>The phone sits in ztOS Rescue</td><td><code>installer/ztos</code>, then choose 3, <i>Reboot the phone from ztOS Rescue</i>.</td></tr>
+              <tr><td>The phone goes back to the recovery by itself</td><td>ztOS didn't start, and the phone fell back safely. Run the install again from the recovery step.</td></tr>
+              <tr><td>The emulator window stays black or QEMU stops</td><td>Leave out <code>--gl</code>; with it, some graphics drivers fail with <code>EGL_BAD_ACCESS</code>.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Still stuck? Ask in #porting on the ztOS Mobile Discord, or <a href="https://github.com/Zerone-Laboratories/ztOS/issues">open an issue</a> with the installer's last lines.</p>
+      </div>
     </div>
   </section>
 
@@ -505,62 +550,22 @@ ztos-sdk logs -f         <span class="c"># what it prints, on the phone</span></
     </div>
   </section>
 
-  <section class="section" id="installing">
-    <div class="wrap">
-      <div><h2>Installing</h2><p class="sub">In the emulator, on a listed phone, or on another phone.</p></div>
-      <div class="body">
-        <p>Everything starts from the ztOS repository on a Linux computer (x86-64 or ARM) with about 15 GB free and an internet connection. The build downloads Arch Linux ARM and about 2 GB of packages, runs ARM programs through qemu-user, and takes 30 to 60 minutes. It never needs <code>sudo</code>: it runs in a user namespace, so your account needs a range in <code>/etc/subuid</code> and <code>/etc/subgid</code>, which most distributions add.</p>
-<pre><span class="c"># on Arch Linux; other distributions have the same tools</span>
-sudo pacman -S --needed util-linux libarchive dosfstools mtools e2fsprogs \
-    qemu-user-static qemu-user-static-binfmt qemu-system-aarch64 edk2-aarch64 android-tools
-git clone https://github.com/Zerone-Laboratories/ztOS.git
-cd ztOS
-installer/ztos doctor        <span class="c"># is this computer ready?</span></pre>
-
-        <h3 id="install-emulator">In the emulator</h3>
-        <p>The quickest way to try ztOS, with nothing to flash.</p>
-<pre>installer/ztos install --target qemu --mode build-install</pre>
-        <p>It asks for a user name, a password, the phone's name and your time zone, builds ztOS into <code>build/ztos/qemu/</code>, then opens it in a phone-shaped window. The mouse is your finger, Escape is the back button, and <code>ssh -p 2222 &lt;user&gt;@localhost</code> gets a shell. <code>installer/ztos emulator</code> starts it again later. The emulator has no modem, sensors or battery, so those parts of ztOS stay off.</p>
-
-        <h3 id="install-listed">On a listed phone</h3>
-        <p>Every phone in the <a href="#devices">device list</a> has its own installation steps, what works on it and its known quirks. Open its entry and follow them. Installing on a phone erases it.</p>
-        <p>The installer's modes, for every target:</p>
-        <div class="table-scroll">
-          <table>
-            <thead><tr><th>Mode</th><th>What it does</th></tr></thead>
-            <tbody>
-              <tr><td class="k">--mode build-install</td><td>Builds the image on this computer with your user and password, then installs it</td></tr>
-              <tr><td class="k">--mode build-store</td><td>Builds the image and keeps it under <code>build/ztos/</code> to install later</td></tr>
-              <tr><td class="k">--mode download</td><td>Installs a prebuilt image from the GitHub release (user <code>zerone</code>, password <code>toor</code>). No BETA-1 release is published yet, so build it for now.</td></tr>
-            </tbody>
-          </table>
-        </div>
-        <p><code>installer/ztos</code> with no arguments asks for each choice in turn.</p>
-
-        <h3 id="install-new">On another phone</h3>
-        <p>ztOS is a generic system image (GSI) plus a device layer for each phone (see <a href="#structure">GSI and ztOSIAL</a>). For a phone postmarketOS already boots on mainline Linux, <a href="#ztconflo">ztConflo</a> builds an image from the GSI with a device layer generated for it:</p>
-<pre>installer/ztos build --target gsi       <span class="c"># build/ztos/gsi/ztos-gsi-0.2.0-aarch64.tar.zst</span>
-ztconflo build &lt;codename&gt; --gsi build/ztos/gsi/ztos-gsi-0.2.0-aarch64.tar.zst</pre>
-        <p>Then <code>ztos-ial status</code> and <code>ztos-ial test</code> on the phone show what works, and the <a href="https://github.com/Zerone-Laboratories/ztos-ial">ztOSIAL porting guide</a> shows how to fix what doesn't. When it runs, <a href="#devices">add it to the device list</a> so others can install it too.</p>
-      </div>
-    </div>
-  </section>
-
   <section class="section" id="devices">
     <div class="wrap">
       <div><h2>Device list</h2><p class="sub">Phones ztOS runs on, ported and kept up by their maintainers.</p></div>
       <div class="body">
-        <p>Each entry has the phone's specifications, how to install ztOS on it, and what works, in the style of postmarketOS's device pages. Ported a phone? Add it: moderators check every entry before it appears here.</p>
-        <div class="legend" aria-label="What the statuses mean">
-          <span><i class="st working">Working</i> tried, and does what it should</span>
-          <span><i class="st partial">Partial</i> some of it works</span>
-          <span><i class="st broken">Broken</i> tried, or not supported, and doesn't work</span>
-          <span><i class="st untested">Untested</i> not tried yet</span>
+        <p>Every phone has its own page on <a href="https://devices.ztos.online">devices.ztos.online</a>: what works, its specifications, and a step-by-step installation guide with every command to type. Phones are sorted by maker, and you can search them.</p>
+        <div class="carousel" id="carousel" aria-roledescription="carousel" aria-label="Supported phones">
+          <div class="track" id="track" aria-live="off"><p class="mute" style="padding:1.25rem">Loading the phones…</p></div>
+          <div class="carousel-nav">
+            <button class="btn ghost small" type="button" id="prev" aria-label="Previous phone">←</button>
+            <div class="dots" id="dots"></div>
+            <button class="btn ghost small" type="button" id="next" aria-label="Next phone">→</button>
+          </div>
         </div>
-        <div class="devices" id="device-grid" aria-live="polite"><p class="mute">Loading the device list…</p></div>
         <div class="actions" style="margin-top:1.25rem">
-          <button class="btn" type="button" id="add-device">Add your port</button>
-          <a class="btn ghost" href="https://github.com/Zerone-Laboratories/ztos-ial">The porting guide</a>
+          <a class="btn" href="https://devices.ztos.online">Go to devices →</a>
+          <a class="btn ghost" href="https://devices.ztos.online/#/add">Add your port</a>
         </div>
       </div>
     </div>
@@ -568,7 +573,7 @@ ztconflo build &lt;codename&gt; --gsi build/ztos/gsi/ztos-gsi-0.2.0-aarch64.tar.
 
   <section class="section" id="ztconflo">
     <div class="wrap">
-      <div><h2>ztConflo: other phones</h2><p class="sub">How ztOS leaves the S9.</p></div>
+      <div><h2>ztConflo: other phones</h2><p class="sub">How ztOS reaches more phones.</p></div>
       <div class="body">
         <p>ztConflo takes a phone's codename and builds a flashable ztOS image for it: Arch Linux ARM with ztMETRO, on a kernel and boot setup that postmarketOS already boots. Given the GSI (<code>--gsi</code>), it adds a device layer generated for the phone and checks the phone's kernel against the GSI's kernel contract. It looks in the ztOS device registry first and falls back to postmarketOS for phones nobody has ported ztOS to yet. It never ports new hardware.</p>
         <dl class="rules">
@@ -631,69 +636,6 @@ ztconflo build &lt;codename&gt; --gsi build/ztos/gsi/ztos-gsi-0.2.0-aarch64.tar.
 
 </div>
 </div>
-
-<dialog class="sheet" id="device-sheet" aria-labelledby="device-title">
-  <div class="sheet-head"><h2 id="device-title">Device</h2><button class="btn ghost small" type="button" data-close>Close</button></div>
-  <div class="sheet-body" id="device-body"></div>
-</dialog>
-
-<dialog class="sheet" id="port-sheet" aria-labelledby="port-title">
-  <div class="sheet-head"><h2 id="port-title">Add your port</h2><button class="btn ghost small" type="button" data-close>Close</button></div>
-  <div class="sheet-body">
-    <form class="port" id="port-form" novalidate>
-      <p>Moderators read every entry on the ztOS Mobile Discord before it appears in the device list. Describe what you tried on the phone itself; say Untested for anything you didn't try.</p>
-      <div class="hp" aria-hidden="true"><label for="pf-website">Website</label><input id="pf-website" name="website" tabindex="-1" autocomplete="off"></div>
-
-      <fieldset>
-        <legend>The phone</legend>
-        <div class="grid2">
-          <div><label for="pf-name">Name</label><input id="pf-name" required maxlength="80" placeholder="Samsung Galaxy S9"></div>
-          <div><label for="pf-maker">Maker</label><input id="pf-maker" required maxlength="40" placeholder="Samsung"></div>
-          <div><label for="pf-model">Model number <span class="hint">optional</span></label><input id="pf-model" maxlength="60" placeholder="SM-G960N"></div>
-          <div><label for="pf-codename">Codename</label><input id="pf-codename" required maxlength="40" pattern="[A-Za-z0-9_.-]+" placeholder="starlte"></div>
-          <div><label for="pf-maintainer">Your name</label><input id="pf-maintainer" required maxlength="80"></div>
-          <div><label for="pf-contact">Discord name, GitHub or link <span class="hint">so moderators can reach you</span></label><input id="pf-contact" required maxlength="200"></div>
-        </div>
-        <div style="margin-top:0.9rem"><label for="pf-summary">About this port <span class="hint">a few sentences: kernel, how it boots, how well it runs</span></label><textarea id="pf-summary" required maxlength="800"></textarea></div>
-        <div style="margin-top:0.9rem">
-          <label for="pf-photo">Photo <span class="hint">the phone running ztOS; JPEG, PNG or WebP, made smaller before it is sent</span></label>
-          <div class="photo-pick"><img id="pf-photo-preview" alt="" hidden><input id="pf-photo" type="file" accept="image/jpeg,image/png,image/webp" required></div>
-        </div>
-      </fieldset>
-
-      <fieldset>
-        <legend>Specifications</legend>
-        <div class="rows" id="pf-specs"></div>
-        <button class="btn ghost small" type="button" data-add="spec">Add a row</button>
-      </fieldset>
-
-      <fieldset>
-        <legend>Installation</legend>
-        <div><label for="pf-warning">Warning <span class="hint">what it erases, what it never touches</span></label><textarea id="pf-warning" maxlength="600"></textarea></div>
-        <div style="margin-top:0.9rem"><label for="pf-reqs">What you need <span class="hint">one per line</span></label><textarea id="pf-reqs" maxlength="2000" placeholder="An unlocked bootloader&#10;A Linux computer with 15 GB free"></textarea></div>
-        <p class="hint" style="margin:0.9rem 0 0.4rem">Steps, in order. Put commands between backticks: <code>`installer/ztos install`</code>.</p>
-        <div class="rows" id="pf-steps"></div>
-        <button class="btn ghost small" type="button" data-add="step">Add a step</button>
-        <div style="margin-top:0.9rem"><label for="pf-after">After installing <span class="hint">optional</span></label><textarea id="pf-after" maxlength="1000"></textarea></div>
-      </fieldset>
-
-      <fieldset>
-        <legend>What works</legend>
-        <div class="rows" id="pf-features"></div>
-        <button class="btn ghost small" type="button" data-add="feature">Add a feature</button>
-      </fieldset>
-
-      <fieldset>
-        <legend>Known quirks <span class="hint">optional</span></legend>
-        <div class="rows" id="pf-notes"></div>
-        <button class="btn ghost small" type="button" data-add="note">Add a quirk</button>
-      </fieldset>
-
-      <div class="actions"><button class="btn" type="submit" id="pf-submit">Send for review</button></div>
-      <div class="alert form-status" id="pf-status" role="status" hidden></div>
-    </form>
-  </div>
-</dialog>
 
 <script>
 (function () {
@@ -771,220 +713,80 @@ ztconflo build &lt;codename&gt; --gsi build/ztos/gsi/ztos-gsi-0.2.0-aarch64.tar.
 })();
 </script>
 <script>
-// The device list: docs/devices/index.json names each phone, whose page is
-// docs/devices/<id>/device.json. "Add your port" sends an entry to the review
-// relay (services/device-submit), which posts it to the ztOS Mobile Discord.
+// The device list's carousel: every phone on devices.ztos.online, read from
+// docs/devices/, one large card at a time, moving on by itself
 (function () {
   var STATUSES = ['working', 'partial', 'broken', 'untested'];
-  var LABEL = { working: 'Working', partial: 'Partial', broken: 'Broken', untested: 'Untested' };
-  var FEATURES = [
-    ['Boot', 'Booting from internal storage'], ['Display', 'Panel'], ['Display', 'Brightness'], ['Display', 'GPU'],
-    ['Input', 'Touchscreen'], ['Input', 'Power and volume keys'], ['Input', 'Vibration'],
-    ['Power', 'CPU, frequency scaling'], ['Power', 'Battery and charging'], ['Power', 'Sleep (suspend)'],
-    ['Network', 'Wi-Fi'], ['Network', 'Bluetooth'], ['Network', 'Mobile data'], ['Network', 'USB networking'],
-    ['Modem', 'SIM and signal'], ['Modem', 'SMS'], ['Modem', 'Calls'],
-    ['Audio', 'Speaker'], ['Audio', 'Microphone'], ['Audio', 'Headphones'],
-    ['Sensors', 'Ambient light'], ['Sensors', 'Accelerometer, gyroscope'], ['Sensors', 'Proximity'],
-    ['Camera', 'Cameras'], ['Location', 'GPS'], ['Software', 'ztMETRO'], ['Software', 'Android apps (Waydroid)'],
-    ['Software', 'ztOSIAL (ztos-ial test)']
-  ];
-  var SPECS = ['SoC', 'CPU', 'GPU', 'RAM', 'Storage', 'Display', 'Battery', 'Kernel', 'Released'];
+  var LABEL = { working: 'working', partial: 'partial', broken: 'broken', untested: 'untested' };
+  var SITE = 'https://devices.ztos.online/#/';
+  var track = document.getElementById('track'), dots = document.getElementById('dots');
+  var carousel = document.getElementById('carousel');
+  var index = 0, timer = null, slides = [];
+  var still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   function esc(t) {
     return String(t == null ? '' : t).replace(/[&<>"']/g, function (c) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
     });
   }
-  // `code` and [text](https://link), nothing else
-  function md(t) {
-    return esc(t).replace(/`([^`]+)`/g, '<code>$1</code>')
-      .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2" rel="noopener">$1</a>');
-  }
-  function el(html) { var d = document.createElement('div'); d.innerHTML = html.trim(); return d.firstChild; }
-  function counts(d) {
+  function slide(d) {
     var c = { working: 0, partial: 0, broken: 0, untested: 0 };
     (d.features || []).forEach(function (f) { if (c[f.status] != null) c[f.status]++; });
-    return c;
+    var works = (d.features || []).filter(function (f) { return f.status === 'working'; }).slice(0, 8).map(function (f) { return esc(f.feature); });
+    var spec = {};
+    (d.specs || []).forEach(function (r) { spec[r[0]] = r[1]; });
+    var a = document.createElement('a');
+    a.className = 'slide';
+    a.href = SITE + encodeURIComponent(d.id);
+    a.innerHTML = '<img src="devices/' + esc(d.id) + '/' + esc(d.photo) + '" alt="" loading="lazy">' +
+      '<span class="slide-body"><small>' + esc(d.maker) + '</small><b>' + esc(d.name) + '</b>' +
+      '<small>' + esc([d.model, d.codename].filter(Boolean).join(' · ')) + '</small>' +
+      '<span class="pills">' + STATUSES.map(function (s) { return c[s] ? '<i class="st ' + s + '">' + c[s] + ' ' + LABEL[s] + '</i>' : ''; }).join('') + '</span>' +
+      '<span class="summary">' + esc(d.summary) + '</span>' +
+      (spec.SoC ? '<span class="kv"><span>SoC</span>' + esc(spec.SoC) + '</span>' : '') +
+      (spec.Kernel ? '<span class="kv"><span>Kernel</span>' + esc(spec.Kernel) + '</span>' : '') +
+      '<span class="kv"><span>Maintainer</span>' + esc(d.maintainer) + '</span>' +
+      (works.length ? '<span class="kv"><span>Works</span>' + works.join(', ') + '</span>' : '') +
+      '<span class="more">Install it, and everything that works →</span></span>';
+    return a;
   }
-
-  var grid = document.getElementById('device-grid');
-  var sheet = document.getElementById('device-sheet');
-  var devices = {};
-
-  function card(d) {
-    var c = counts(d), total = STATUSES.reduce(function (n, k) { return n + c[k]; }, 0) || 1;
-    var bar = STATUSES.map(function (k) {
-      return c[k] ? '<span class="' + k + '" style="width:' + (100 * c[k] / total) + '%" title="' + LABEL[k] + ': ' + c[k] + '"></span>' : '';
-    }).join('');
-    var b = el('<button class="device-card" type="button">' +
-      '<img src="devices/' + esc(d.id) + '/' + esc(d.photo) + '" alt="" loading="lazy">' +
-      '<span class="meta"><b>' + esc(d.name) + '</b><small>' + esc([d.model, d.codename].filter(Boolean).join(' · ')) + '</small>' +
-      '<small>' + c.working + ' working, ' + c.partial + ' partial, ' + c.broken + ' broken' + (c.untested ? ', ' + c.untested + ' untested' : '') + '</small>' +
-      '<span class="bar" aria-hidden="true">' + bar + '</span></span></button>');
-    b.addEventListener('click', function () { location.hash = 'device/' + d.id; });
-    return b;
+  function go(i, user) {
+    if (!slides.length) return;
+    index = (i + slides.length) % slides.length;
+    track.scrollTo({ left: slides[index].offsetLeft - track.offsetLeft, behavior: still ? 'auto' : 'smooth' });
+    Array.prototype.forEach.call(dots.children, function (d, n) { d.setAttribute('aria-current', String(n === index)); });
+    if (user) restart();
   }
-
-  function page(d) {
-    var base = 'devices/' + esc(d.id) + '/';
-    var h = '<div class="device-top"><figure><img src="' + base + esc(d.photo) + '" alt="' + esc(d.name) + '">' +
-      (d.photo_caption ? '<figcaption>' + esc(d.photo_caption) + '</figcaption>' : '') + '</figure><div>' +
-      '<p>' + md(d.summary) + '</p><aside class="infobox"><div class="cap">Specifications</div><dl>' +
-      [['Maker', d.maker], ['Model', d.model], ['Codename', d.codename]].filter(function (r) { return r[1]; })
-        .concat(d.specs || []).map(function (r) { return '<dt>' + esc(r[0]) + '</dt><dd>' + md(r[1]) + '</dd>'; }).join('') +
-      '<dt>Maintainer</dt><dd>' + esc(d.maintainer) + (d.contact ? '<br>' + md(/^https?:\/\//.test(d.contact) ? '[' + d.contact + '](' + d.contact + ')' : d.contact) : '') + '</dd>' +
-      '</dl></aside></div></div>';
-    var i = d.install || {};
-    h += '<h3>Installing</h3>';
-    if (i.warning) h += '<div class="alert" role="note"><b>Read this first</b>' + md(i.warning) + '</div>';
-    if (i.requirements && i.requirements.length) h += '<p style="margin-top:1rem"><b>You need</b></p><ul class="prose">' + i.requirements.map(function (r) { return '<li>' + md(r) + '</li>'; }).join('') + '</ul>';
-    if (i.steps && i.steps.length) h += '<ol class="steps">' + i.steps.map(function (s) { return '<li><div><b>' + md(s.title) + '</b><span>' + md(s.text) + '</span></div></li>'; }).join('') + '</ol>';
-    if (i.after) h += '<p style="margin-top:1rem">' + md(i.after) + '</p>';
-    h += '<h3>What works</h3><div class="table-scroll"><table><thead><tr><th>Category</th><th>Feature</th><th>Status</th><th>Notes</th></tr></thead><tbody>' +
-      (d.features || []).map(function (f) {
-        var st = STATUSES.indexOf(f.status) < 0 ? 'untested' : f.status;
-        return '<tr><td>' + esc(f.category) + '</td><td>' + esc(f.feature) + '</td><td class="st ' + st + '">' + LABEL[st] + '</td><td>' + md(f.notes) + '</td></tr>';
-      }).join('') + '</tbody></table></div>';
-    if (d.notes && d.notes.length) h += '<h3>Known quirks</h3><ul class="prose">' + d.notes.map(function (n) { return '<li><b>' + md(n.title) + '.</b> ' + md(n.text) + '</li>'; }).join('') + '</ul>';
-    return h;
+  function restart() {
+    clearInterval(timer);
+    if (!still && slides.length > 1) timer = setInterval(function () { go(index + 1); }, 6000);
   }
+  document.getElementById('prev').addEventListener('click', function () { go(index - 1, true); });
+  document.getElementById('next').addEventListener('click', function () { go(index + 1, true); });
+  carousel.addEventListener('mouseenter', function () { clearInterval(timer); });
+  carousel.addEventListener('mouseleave', restart);
+  carousel.addEventListener('focusin', function () { clearInterval(timer); });
+  carousel.addEventListener('focusout', restart);
 
-  function route() {
-    var m = /^#device\/([a-z0-9-]+)$/.exec(location.hash);
-    if (m && devices[m[1]]) {
-      var d = devices[m[1]];
-      document.getElementById('device-title').textContent = d.name;
-      document.getElementById('device-body').innerHTML = page(d);
-      document.getElementById('device-body').scrollTop = 0;
-      if (!sheet.open) sheet.showModal();
-    } else if (sheet.open) {
-      sheet.close();
-    }
-  }
-  sheet.addEventListener('close', function () {
-    if (/^#device\//.test(location.hash)) history.replaceState(null, '', '#devices');
-  });
-  window.addEventListener('hashchange', route);
-
-  fetch('devices/index.json', { cache: 'no-cache' }).then(function (r) { return r.json(); }).then(function (index) {
-    return Promise.all(index.devices.map(function (id) {
+  fetch('devices/index.json', { cache: 'no-cache' }).then(function (r) { return r.json(); }).then(function (list) {
+    return Promise.all(list.devices.map(function (id) {
       return fetch('devices/' + id + '/device.json', { cache: 'no-cache' }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; });
     }));
   }).then(function (list) {
-    grid.innerHTML = '';
-    list.filter(Boolean).forEach(function (d) { devices[d.id] = d; grid.appendChild(card(d)); });
-    if (!grid.children.length) grid.innerHTML = '<p class="mute">No phones are listed yet.</p>';
-    route();
+    track.innerHTML = '';
+    list.filter(Boolean).forEach(function (d, n) {
+      var el = slide(d);
+      track.appendChild(el); slides.push(el);
+      var dot = document.createElement('button');
+      dot.type = 'button'; dot.setAttribute('aria-label', d.name);
+      dot.addEventListener('click', function () { go(n, true); });
+      dots.appendChild(dot);
+    });
+    if (!slides.length) track.innerHTML = '<p class="mute" style="padding:1.25rem">No phones are listed yet. <a href="https://devices.ztos.online/#/add">Add yours</a>.</p>';
+    carousel.classList.toggle('single', slides.length < 2);
+    go(0); restart();
   }).catch(function () {
-    grid.innerHTML = '<p class="mute">The device list didn\'t load. Reload the page to try again.</p>';
-  });
-
-  Array.prototype.forEach.call(document.querySelectorAll('dialog.sheet [data-close]'), function (b) {
-    b.addEventListener('click', function () { b.closest('dialog').close(); });
-  });
-
-  // ---- Add your port ----
-  var portSheet = document.getElementById('port-sheet');
-  var form = document.getElementById('port-form');
-  var status = document.getElementById('pf-status');
-  var endpoint = (document.querySelector('meta[name="ztos-submit"]') || {}).content || '';
-  var photo = null;
-
-  function input(cls, ph, val, max) {
-    return '<input class="' + cls + '" placeholder="' + esc(ph) + '" value="' + esc(val || '') + '" maxlength="' + (max || 200) + '">';
-  }
-  function remove() { return '<button type="button" aria-label="Remove">Remove</button>'; }
-  function addRow(kind, a, b, c) {
-    var html;
-    if (kind === 'spec') html = '<div class="row spec">' + input('k', 'SoC', a, 40) + input('v', 'Snapdragon 845', b, 200) + remove() + '</div>';
-    if (kind === 'step') html = '<div class="row step">' + input('k', 'Unlock the bootloader', a, 120) + '<textarea class="v" maxlength="1200" placeholder="What to do, with commands between backticks">' + esc(b || '') + '</textarea>' + remove() + '</div>';
-    if (kind === 'note') html = '<div class="row note">' + input('k', 'What goes wrong', a, 120) + '<textarea class="v" maxlength="800" placeholder="And what to do about it">' + esc(b || '') + '</textarea>' + remove() + '</div>';
-    if (kind === 'feature') {
-      html = '<div class="row feature">' + input('cat', 'Category', a, 40) + input('k', 'Feature', b, 80) +
-        '<select class="st untested" aria-label="Status">' + STATUSES.map(function (s) { return '<option value="' + s + '"' + (s === (c || 'untested') ? ' selected' : '') + '>' + LABEL[s] + '</option>'; }).join('') + '</select>' +
-        input('v', 'Notes', '', 300) + remove() + '</div>';
-    }
-    var row = el(html);
-    row.querySelector('button').addEventListener('click', function () { row.remove(); });
-    var sel = row.querySelector('select');
-    if (sel) { sel.className = 'st ' + sel.value; sel.addEventListener('change', function () { sel.className = 'st ' + sel.value; }); }
-    document.getElementById('pf-' + (kind === 'spec' ? 'specs' : kind + 's')).appendChild(row);
-    return row;
-  }
-  Array.prototype.forEach.call(form.querySelectorAll('[data-add]'), function (b) {
-    b.addEventListener('click', function () { var r = addRow(b.getAttribute('data-add')); r.querySelector('input,textarea').focus(); });
-  });
-  SPECS.forEach(function (k) { addRow('spec', k, ''); });
-  addRow('step', '', '');
-  FEATURES.forEach(function (f) { addRow('feature', f[0], f[1], 'untested'); });
-
-  document.getElementById('add-device').addEventListener('click', function () { portSheet.showModal(); });
-
-  // the photo, scaled to at most 1280 px on its long side, as JPEG
-  document.getElementById('pf-photo').addEventListener('change', function (e) {
-    var file = e.target.files[0];
-    photo = null;
-    if (!file) return;
-    var img = new Image();
-    img.onload = function () {
-      var k = Math.min(1, 1280 / Math.max(img.naturalWidth, img.naturalHeight));
-      var c = document.createElement('canvas');
-      c.width = Math.round(img.naturalWidth * k); c.height = Math.round(img.naturalHeight * k);
-      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-      photo = c.toDataURL('image/jpeg', 0.85);
-      var pv = document.getElementById('pf-photo-preview');
-      pv.src = photo; pv.hidden = false;
-      URL.revokeObjectURL(img.src);
-    };
-    img.onerror = function () { say('That photo couldn\'t be read. Try a JPEG or PNG.', true); };
-    img.src = URL.createObjectURL(file);
-  });
-
-  function say(text, bad) { status.hidden = false; status.innerHTML = (bad ? '<b>Not sent</b>' : '<b>Sent</b>') + esc(text); status.scrollIntoView({ block: 'nearest' }); }
-  function val(id) { return document.getElementById(id).value.trim(); }
-  function rows(id, fn) { return Array.prototype.map.call(document.querySelectorAll('#' + id + ' .row'), fn).filter(Boolean); }
-
-  form.addEventListener('submit', function (e) {
-    e.preventDefault();
-    var missing = ['pf-name', 'pf-maker', 'pf-codename', 'pf-maintainer', 'pf-contact', 'pf-summary'].filter(function (id) { return !val(id); })
-      .map(function (id) { return form.querySelector('label[for="' + id + '"]').firstChild.textContent.trim(); });
-    if (!/^[A-Za-z0-9_.-]*$/.test(val('pf-codename'))) missing.push('Codename (letters, digits, - _ . only)');
-    if (!photo) missing.push('Photo');
-    var entry = {
-      name: val('pf-name'), maker: val('pf-maker'), model: val('pf-model'), codename: val('pf-codename'),
-      maintainer: val('pf-maintainer'), contact: val('pf-contact'), summary: val('pf-summary'),
-      specs: rows('pf-specs', function (r) { var k = r.querySelector('.k').value.trim(), v = r.querySelector('.v').value.trim(); return k && v ? [k, v] : null; }),
-      install: {
-        warning: val('pf-warning'),
-        requirements: val('pf-reqs').split('\n').map(function (l) { return l.trim(); }).filter(Boolean),
-        steps: rows('pf-steps', function (r) { var k = r.querySelector('.k').value.trim(), v = r.querySelector('.v').value.trim(); return k ? { title: k, text: v } : null; }),
-        after: val('pf-after')
-      },
-      features: rows('pf-features', function (r) {
-        var k = r.querySelector('.k').value.trim();
-        return k ? { category: r.querySelector('.cat').value.trim(), feature: k, status: r.querySelector('select').value, notes: r.querySelector('.v').value.trim() } : null;
-      }),
-      notes: rows('pf-notes', function (r) { var k = r.querySelector('.k').value.trim(), v = r.querySelector('.v').value.trim(); return k ? { title: k, text: v } : null; }),
-      photo: photo,
-      website: document.getElementById('pf-website').value
-    };
-    if (!entry.install.steps.length) missing.push('At least one installation step');
-    if (missing.length) { say('Fill in: ' + missing.join(', ') + '.', true); return; }
-    if (!endpoint) { say('Submissions aren\'t open yet. Post your port in #ztos-device-ports on the ztOS Mobile Discord for now.', true); return; }
-    var btn = document.getElementById('pf-submit');
-    btn.disabled = true; btn.textContent = 'Sending…';
-    fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(entry) })
-      .then(function (r) { return r.json().catch(function () { return { error: 'The review service answered ' + r.status + '.' }; }); })
-      .then(function (res) {
-        if (res.ok) {
-          say('Your ' + entry.name + ' is with the moderators, in #ztos-device-ports on the ztOS Mobile Discord. It appears here once they accept it.');
-          form.reset(); photo = null; document.getElementById('pf-photo-preview').hidden = true;
-        } else {
-          say(res.error || 'Something went wrong. Try again in a minute.', true);
-        }
-      })
-      .catch(function () { say('The review service couldn\'t be reached. Check the connection and try again.', true); })
-      .then(function () { btn.disabled = false; btn.textContent = 'Send for review'; });
+    track.innerHTML = '<p class="mute" style="padding:1.25rem">The phones didn\'t load. <a href="https://devices.ztos.online">See them on devices.ztos.online</a>.</p>';
   });
 })();
 </script>

@@ -113,15 +113,8 @@ function normalise(raw, photoName) {
 			.slice(0, 30)
 			.map((r) => [clip(r && r[0], 40), clip(r && r[1], 200)])
 			.filter((r) => r[0] && r[1]),
-		install: {
-			warning: clip(install.warning, 600),
-			requirements: (Array.isArray(install.requirements) ? install.requirements : []).slice(0, 20).map((r) => clip(r, 400)).filter(Boolean),
-			steps: (Array.isArray(install.steps) ? install.steps : [])
-				.slice(0, 30)
-				.map((s) => ({ title: clip(s && s.title, 120), text: clip(s && s.text, 1200) }))
-				.filter((s) => s.title),
-			after: clip(install.after, 1000),
-		},
+		// the installation guide: Markdown, with its commands in code blocks
+		install: { markdown: clip(install.markdown, 30000) },
 		features: (Array.isArray(raw.features) ? raw.features : [])
 			.slice(0, 80)
 			.map((f) => ({
@@ -142,7 +135,7 @@ function normalise(raw, photoName) {
 	for (const [key, label] of [['name', 'name'], ['maker', 'maker'], ['codename', 'codename'], ['maintainer', 'your name'], ['contact', 'contact'], ['summary', 'about this port']]) {
 		if (!device[key]) problems.push(label);
 	}
-	if (!device.install.steps.length) problems.push('at least one installation step');
+	if (device.install.markdown.length < 40) problems.push('the installation guide');
 	return { device, problems };
 }
 
@@ -223,7 +216,7 @@ async function post(env, device, photo, existing) {
 				`What works: ${STATUSES.map((s) => `${MARK[s]} ${counts[s]}`).join('  ')}`,
 				device.features.map((f) => `${MARK[f.status]} ${plain(f.feature)}${f.notes ? ` — ${plain(f.notes)}` : ''}`),
 			),
-			field(`Installation: ${device.install.steps.length} steps`, device.install.steps.map((s, i) => `${i + 1}. ${plain(s.title)}`)),
+			{ name: 'Installation', value: 'The full guide is in the messages below.' },
 		],
 		image: { url: `attachment://${device.photo}` },
 		footer: { text: `${device.id}${existing ? ' · replaces the entry already in the device list' : ''} · the full entry is in device.json` },
@@ -247,7 +240,46 @@ async function post(env, device, photo, existing) {
 	);
 	form.append('files[0]', new Blob([photo.bytes], { type: photo.type }), device.photo);
 	form.append('files[1]', new Blob([JSON.stringify(device, null, 2) + '\n'], { type: 'application/json' }), 'device.json');
-	await discord(env, `/channels/${env.FORUM_CHANNEL}/threads`, { method: 'POST', body: form });
+	const thread = await discord(env, `/channels/${env.FORUM_CHANNEL}/threads`, { method: 'POST', body: form });
+	for (const content of chunks(`## Installation\n\n${forDiscord(device.install.markdown)}`)) {
+		await discord(env, `/channels/${thread.id}/messages`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ content, allowed_mentions: { parse: [] }, flags: 4 }), // 4: no link previews
+		});
+	}
+}
+
+// Discord draws no tables: each row becomes "- first cell: the rest"
+function forDiscord(markdown) {
+	const rows = markdown.split('\n');
+	return rows
+		.filter((line, i) => !/^\s*\|?\s*:?-{3,}/.test(line) && !(/^\s*\|/.test(line) && /^\s*\|?\s*:?-{3,}/.test(rows[i + 1] || '')))
+		.map((line) => {
+			if (!/^\s*\|.*\|\s*$/.test(line)) return line;
+			const cells = line.trim().slice(1, -1).split('|').map((c) => c.trim());
+			return `- **${cells[0]}**: ${cells.slice(1).join(' · ')}`;
+		})
+		.join('\n');
+}
+
+// Markdown in pieces under Discord's 2000 characters, split between lines; a
+// code block cut in two is closed at the end of one piece and opened again
+function chunks(markdown, size = 1900) {
+	const out = [];
+	let piece = '';
+	let fence = null;
+	for (const line of markdown.split('\n')) {
+		if (piece.length + line.length + 1 > size && piece) {
+			out.push(fence ? `${piece}\n\`\`\`` : piece);
+			piece = fence ? fence : '';
+		}
+		piece += (piece ? '\n' : '') + line.slice(0, size - 10);
+		const m = /^\s*(```+)(.*)$/.exec(line);
+		if (m) fence = fence ? null : '```' + m[2].trim();
+	}
+	if (piece.trim()) out.push(piece);
+	return out;
 }
 
 // ---- the buttons ----------------------------------------------------------------
